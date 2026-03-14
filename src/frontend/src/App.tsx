@@ -44,6 +44,10 @@ export default function App() {
   const [donorPhone, setDonorPhone] = useState("");
   const [donorAmount, setDonorAmount] = useState("");
   const [donorNote, setDonorNote] = useState("");
+  const [_screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(
+    null,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -61,6 +65,9 @@ export default function App() {
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(false);
+  const [donationScreenshots, setDonationScreenshots] = useState<
+    (string | null)[]
+  >([]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -81,6 +88,17 @@ export default function App() {
     try {
       if (!actor) throw new Error("Not ready");
       await actor.submitDonation(donorName, donorPhone, donorAmount, donorNote);
+      // Save screenshot to localStorage
+      const ssCount = Number.parseInt(
+        localStorage.getItem("donation_screenshot_count") || "0",
+      );
+      if (screenshotPreview) {
+        localStorage.setItem(
+          `donation_screenshot_${ssCount}`,
+          screenshotPreview,
+        );
+      }
+      localStorage.setItem("donation_screenshot_count", String(ssCount + 1));
       setSubmittedData({
         name: donorName,
         phone: donorPhone,
@@ -92,6 +110,8 @@ export default function App() {
       setDonorPhone("");
       setDonorAmount("");
       setDonorNote("");
+      setScreenshotFile(null);
+      setScreenshotPreview(null);
     } catch {
       setSubmitError("सबमिट करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
     } finally {
@@ -101,7 +121,7 @@ export default function App() {
 
   const handleAdminPinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminPin === "1234") {
+    if (adminPin === "8102") {
       setAdminAuthenticated(true);
       setAdminPinError(false);
       setLoadingDonations(true);
@@ -109,6 +129,13 @@ export default function App() {
         if (!actor) throw new Error("Not ready");
         const data = await actor.getAllDonations();
         setDonations(data as Donation[]);
+        // Load screenshots from localStorage
+        const screenshots: (string | null)[] = data.map(
+          (_: unknown, idx: number) => {
+            return localStorage.getItem(`donation_screenshot_${idx}`);
+          },
+        );
+        setDonationScreenshots(screenshots);
       } catch {
         // ignore
       } finally {
@@ -125,6 +152,7 @@ export default function App() {
     setAdminPinError(false);
     setAdminAuthenticated(false);
     setDonations([]);
+    setDonationScreenshots([]);
   };
 
   return (
@@ -826,6 +854,74 @@ export default function App() {
                           />
                         </div>
 
+                        {/* Screenshot Upload */}
+                        <div>
+                          <label
+                            htmlFor="donor-screenshot"
+                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                          >
+                            भुगतान स्क्रीनशॉट{" "}
+                            <span className="text-saffron-400 font-normal text-xs">
+                              (वैकल्पिक)
+                            </span>
+                          </label>
+                          <label
+                            htmlFor="donor-screenshot"
+                            data-ocid="donation.upload_button"
+                            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-saffron-300 rounded-xl cursor-pointer bg-white hover:bg-saffron-50 transition-colors"
+                          >
+                            {screenshotPreview ? (
+                              <img
+                                src={screenshotPreview}
+                                alt="Screenshot preview"
+                                className="h-full w-full object-contain rounded-xl"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center gap-1 text-saffron-500">
+                                <span className="text-3xl">📷</span>
+                                <span className="hindi-text text-sm">
+                                  स्क्रीनशॉट अपलोड करें
+                                </span>
+                                <span className="text-xs text-saffron-400">
+                                  JPG, PNG
+                                </span>
+                              </div>
+                            )}
+                            <input
+                              id="donor-screenshot"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] ?? null;
+                                setScreenshotFile(file);
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) =>
+                                    setScreenshotPreview(
+                                      ev.target?.result as string,
+                                    );
+                                  reader.readAsDataURL(file);
+                                } else {
+                                  setScreenshotPreview(null);
+                                }
+                              }}
+                            />
+                          </label>
+                          {screenshotPreview && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setScreenshotFile(null);
+                                setScreenshotPreview(null);
+                              }}
+                              className="hindi-text text-xs text-red-500 mt-1 hover:underline"
+                            >
+                              हटाएं
+                            </button>
+                          )}
+                        </div>
+
                         {submitError && (
                           <div
                             data-ocid="donation.error_state"
@@ -1264,6 +1360,18 @@ export default function App() {
                             <p className="hindi-text text-saffron-600 text-sm mt-2 pl-11 italic">
                               "{d.note}"
                             </p>
+                          )}
+                          {donationScreenshots[i] && (
+                            <div className="mt-3 pl-11">
+                              <p className="hindi-text text-saffron-600 text-xs mb-1 font-semibold">
+                                📷 भुगतान स्क्रीनशॉट:
+                              </p>
+                              <img
+                                src={donationScreenshots[i]!}
+                                alt="Payment screenshot"
+                                className="max-h-48 rounded-lg border border-saffron-300 object-contain"
+                              />
+                            </div>
                           )}
                         </motion.div>
                       ))}

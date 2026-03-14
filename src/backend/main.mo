@@ -3,9 +3,9 @@ import Nat "mo:core/Nat";
 import Time "mo:core/Time";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   public type Donation = {
     name : Text;
