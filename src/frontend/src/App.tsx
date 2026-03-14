@@ -1,7 +1,8 @@
-import { Heart, Menu, X } from "lucide-react";
+import { Heart, Loader2, Lock, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { SiFacebook, SiInstagram, SiYoutube } from "react-icons/si";
+import { useActor } from "./hooks/useActor";
 
 const INSTAGRAM_URL =
   "https://www.instagram.com/shriramnavamiusari?igsh=MTBrMWRweHR6NnFsNw%3D%3D&utm_source=qr";
@@ -16,9 +17,50 @@ const NAV_ITEMS = [
   { label: "दान करें", id: "donation", ocid: "nav.link.4" },
 ];
 
+interface Donation {
+  name: string;
+  phone: string;
+  amount: string;
+  note: string;
+  timestamp: bigint;
+}
+
+function formatTimestamp(ts: bigint): string {
+  try {
+    const ms = Number(ts / 1_000_000n);
+    return new Date(ms).toLocaleString("hi-IN");
+  } catch {
+    return "—";
+  }
+}
+
 export default function App() {
+  const { actor } = useActor();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Donation form state
+  const [donorName, setDonorName] = useState("");
+  const [donorPhone, setDonorPhone] = useState("");
+  const [donorAmount, setDonorAmount] = useState("");
+  const [donorNote, setDonorNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{
+    name: string;
+    phone: string;
+    amount: string;
+    note: string;
+  } | null>(null);
+
+  // Admin panel state
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminPin, setAdminPin] = useState("");
+  const [adminPinError, setAdminPinError] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loadingDonations, setLoadingDonations] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -29,6 +71,60 @@ export default function App() {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setMenuOpen(false);
+  };
+
+  const handleDonationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!donorName.trim() || !donorPhone.trim() || !donorAmount.trim()) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      if (!actor) throw new Error("Not ready");
+      await actor.submitDonation(donorName, donorPhone, donorAmount, donorNote);
+      setSubmittedData({
+        name: donorName,
+        phone: donorPhone,
+        amount: donorAmount,
+        note: donorNote,
+      });
+      setSubmitted(true);
+      setDonorName("");
+      setDonorPhone("");
+      setDonorAmount("");
+      setDonorNote("");
+    } catch {
+      setSubmitError("सबमिट करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAdminPinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPin === "1234") {
+      setAdminAuthenticated(true);
+      setAdminPinError(false);
+      setLoadingDonations(true);
+      try {
+        if (!actor) throw new Error("Not ready");
+        const data = await actor.getAllDonations();
+        setDonations(data as Donation[]);
+      } catch {
+        // ignore
+      } finally {
+        setLoadingDonations(false);
+      }
+    } else {
+      setAdminPinError(true);
+    }
+  };
+
+  const handleAdminClose = () => {
+    setAdminOpen(false);
+    setAdminPin("");
+    setAdminPinError(false);
+    setAdminAuthenticated(false);
+    setDonations([]);
   };
 
   return (
@@ -42,7 +138,6 @@ export default function App() {
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo + Title */}
           <div className="flex items-center gap-3">
             <img
               src="/assets/uploads/234724-3.png"
@@ -67,7 +162,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-5">
             {NAV_ITEMS.map((item) => (
               <button
@@ -84,7 +178,6 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Mobile Menu Toggle */}
           <button
             type="button"
             className="md:hidden p-2"
@@ -93,12 +186,28 @@ export default function App() {
             {menuOpen ? (
               <X className={scrolled ? "text-saffron-700" : "text-white"} />
             ) : (
-              <Menu className={scrolled ? "text-saffron-700" : "text-white"} />
+              <svg
+                role="img"
+                aria-labelledby="menu-icon-title"
+                className={`w-6 h-6 ${
+                  scrolled ? "text-saffron-700" : "text-white"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title id="menu-icon-title">Menu</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
             )}
           </button>
         </div>
 
-        {/* Mobile Dropdown */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
@@ -135,8 +244,6 @@ export default function App() {
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="hero-overlay absolute inset-0" />
-
-          {/* Decorative gold border overlay */}
           <div className="absolute inset-4 border border-saffron-400/50 pointer-events-none" />
           <div className="absolute inset-8 border border-saffron-300/25 pointer-events-none" />
 
@@ -146,7 +253,6 @@ export default function App() {
             transition={{ duration: 1, ease: "easeOut" }}
             className="relative z-10 text-center px-6 max-w-3xl"
           >
-            {/* Om symbol */}
             <motion.div
               initial={{ scale: 0.4, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -233,7 +339,6 @@ export default function App() {
             </motion.div>
           </motion.div>
 
-          {/* Scroll indicator */}
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.8 }}
@@ -265,7 +370,6 @@ export default function App() {
               </div>
             </motion.div>
 
-            {/* Logo centered */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -334,7 +438,6 @@ export default function App() {
               </div>
             </motion.div>
 
-            {/* Event Card */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -343,7 +446,6 @@ export default function App() {
               data-ocid="events.card"
               className="max-w-2xl mx-auto"
             >
-              {/* Banner Image with gold border */}
               <div
                 className="rounded-2xl overflow-hidden mb-8"
                 style={{
@@ -363,7 +465,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Event Details Card */}
               <div
                 className="bg-white/5 backdrop-blur-sm border border-saffron-600/40 rounded-2xl p-8"
                 style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}
@@ -376,7 +477,6 @@ export default function App() {
                 </p>
 
                 <div className="space-y-4">
-                  {/* Venue */}
                   <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
                     <span className="text-xl mt-0.5">📍</span>
                     <div>
@@ -388,8 +488,6 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Start */}
                   <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
                     <span className="text-xl mt-0.5">🏺</span>
                     <div>
@@ -401,8 +499,6 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Katha Timing */}
                   <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
                     <span className="text-xl mt-0.5">📿</span>
                     <div>
@@ -414,8 +510,6 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Shobha Yatra */}
                   <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
                     <span className="text-xl mt-0.5">🎺</span>
                     <div>
@@ -427,8 +521,6 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Katha Vachak - highlighted */}
                   <div
                     className="rounded-xl px-5 py-4 text-center"
                     style={{
@@ -447,8 +539,6 @@ export default function App() {
                       श्रीधाम वृन्दावन
                     </p>
                   </div>
-
-                  {/* Organizers */}
                   <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
                     <span className="text-xl mt-0.5">🙏</span>
                     <div>
@@ -505,7 +595,6 @@ export default function App() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="festive-card rounded-2xl p-8 md:p-12"
             >
-              {/* Org name */}
               <div className="mb-6">
                 <h3 className="hindi-text text-2xl md:text-3xl font-bold text-saffron-800 mb-1">
                   आयुष्मान सेवा संघ
@@ -519,7 +608,6 @@ export default function App() {
                 <span className="text-saffron-500">✦</span>
               </div>
 
-              {/* Quote */}
               <div className="bg-saffron-100 border border-saffron-300 rounded-xl p-4 mb-8">
                 <p className="hindi-text text-saffron-800 text-base md:text-lg leading-relaxed">
                   "धर्मशाला के रख-रखाव एवं विकास कार्य हेतु अपनी स्वेच्छा से दान दें।"
@@ -547,8 +635,7 @@ export default function App() {
                 </div>
               </motion.div>
 
-              {/* Verification */}
-              <div className="bg-saffron-50 border border-saffron-300 rounded-xl p-4 mb-4">
+              <div className="bg-saffron-50 border border-saffron-300 rounded-xl p-4 mb-8">
                 <p className="hindi-text text-saffron-700 text-sm mb-1">
                   पुष्टि हेतु नाम जाँचें:
                 </p>
@@ -563,9 +650,231 @@ export default function App() {
                 </p>
               </div>
 
-              <p className="hindi-text text-saffron-800 text-2xl font-bold mt-6">
+              {/* ── DONATION FORM ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <div
+                  className="rounded-2xl p-6 md:p-8 text-left"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.94 0.05 78), oklch(0.97 0.03 85))",
+                    border: "2px solid oklch(0.75 0.14 58)",
+                    boxShadow: "0 6px 32px oklch(0.62 0.18 50 / 0.15)",
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-3xl">📝</span>
+                    <div>
+                      <h3 className="hindi-text text-xl md:text-2xl font-bold text-saffron-800">
+                        अपना दान विवरण भरें
+                      </h3>
+                      <p className="hindi-text text-saffron-600 text-sm mt-0.5">
+                        भुगतान के बाद नीचे विवरण भरकर सबमिट करें
+                      </p>
+                    </div>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {submitted && submittedData ? (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.4 }}
+                        data-ocid="donation.success_state"
+                        className="rounded-xl p-6 text-center"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, oklch(0.92 0.08 130 / 0.3), oklch(0.95 0.05 140 / 0.3))",
+                          border: "2px solid oklch(0.62 0.18 140)",
+                        }}
+                      >
+                        <div className="text-5xl mb-3">🙏</div>
+                        <h4 className="hindi-text text-xl font-bold text-green-700 mb-2">
+                          धन्यवाद! आपका दान विवरण सफलतापूर्वक सबमिट हो गया 🙏
+                        </h4>
+                        <p className="hindi-text text-saffron-700 text-sm mb-5">
+                          प्रभु राम आपका कल्याण करें।
+                        </p>
+                        <div
+                          className="rounded-xl p-4 text-left space-y-2 mb-5"
+                          style={{
+                            background: "oklch(0.97 0.02 85)",
+                            border: "1px solid oklch(0.82 0.10 60)",
+                          }}
+                        >
+                          <p className="hindi-text text-saffron-700 text-sm">
+                            <span className="font-semibold">नाम:</span>{" "}
+                            {submittedData.name}
+                          </p>
+                          <p className="hindi-text text-saffron-700 text-sm">
+                            <span className="font-semibold">मोबाइल:</span>{" "}
+                            {submittedData.phone}
+                          </p>
+                          <p className="hindi-text text-saffron-700 text-sm">
+                            <span className="font-semibold">दान राशि:</span> ₹
+                            {submittedData.amount}
+                          </p>
+                          {submittedData.note && (
+                            <p className="hindi-text text-saffron-700 text-sm">
+                              <span className="font-semibold">संदेश:</span>{" "}
+                              {submittedData.note}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSubmitted(false)}
+                          className="btn-saffron hindi-text px-6 py-2 rounded-full text-sm font-medium"
+                        >
+                          और दान विवरण भरें
+                        </button>
+                      </motion.div>
+                    ) : (
+                      <motion.form
+                        key="form"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onSubmit={handleDonationSubmit}
+                        className="space-y-5"
+                      >
+                        {/* Name */}
+                        <div>
+                          <label
+                            htmlFor="donor-name"
+                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                          >
+                            नाम <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="donor-name"
+                            type="text"
+                            required
+                            value={donorName}
+                            onChange={(e) => setDonorName(e.target.value)}
+                            placeholder="अपना नाम लिखें"
+                            data-ocid="donation.input"
+                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
+                          />
+                        </div>
+
+                        {/* Phone */}
+                        <div>
+                          <label
+                            htmlFor="donor-phone"
+                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                          >
+                            मोबाइल नंबर <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="donor-phone"
+                            type="tel"
+                            required
+                            value={donorPhone}
+                            onChange={(e) => setDonorPhone(e.target.value)}
+                            placeholder="10 अंकों का मोबाइल नंबर"
+                            data-ocid="donation.input"
+                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
+                          />
+                        </div>
+
+                        {/* Amount */}
+                        <div>
+                          <label
+                            htmlFor="donor-amount"
+                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                          >
+                            दान राशि (₹) <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="donor-amount"
+                            type="text"
+                            required
+                            value={donorAmount}
+                            onChange={(e) => setDonorAmount(e.target.value)}
+                            placeholder="जितना दान दिया, वह राशि"
+                            data-ocid="donation.input"
+                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
+                          />
+                        </div>
+
+                        {/* Note (optional) */}
+                        <div>
+                          <label
+                            htmlFor="donor-note"
+                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                          >
+                            संदेश{" "}
+                            <span className="text-saffron-400 font-normal text-xs">
+                              (वैकल्पिक)
+                            </span>
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={donorNote}
+                            onChange={(e) => setDonorNote(e.target.value)}
+                            placeholder="कोई संदेश या विशेष निर्देश..."
+                            id="donor-note"
+                            data-ocid="donation.textarea"
+                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base resize-none"
+                          />
+                        </div>
+
+                        {submitError && (
+                          <div
+                            data-ocid="donation.error_state"
+                            className="hindi-text text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm"
+                          >
+                            {submitError}
+                          </div>
+                        )}
+
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          data-ocid="donation.submit_button"
+                          className="btn-saffron hindi-text w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {submitting ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              <span>सबमिट हो रहा है...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>🙏</span>
+                              <span>विवरण सबमिट करें</span>
+                            </>
+                          )}
+                        </button>
+                      </motion.form>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+
+              <p className="hindi-text text-saffron-800 text-2xl font-bold mt-8">
                 धन्यवाद! 🙏
               </p>
+
+              {/* Admin Button */}
+              <div className="mt-6">
+                <button
+                  type="button"
+                  data-ocid="admin.open_modal_button"
+                  onClick={() => setAdminOpen(true)}
+                  className="text-saffron-400/70 text-xs hover:text-saffron-500 transition-colors flex items-center gap-1.5 mx-auto"
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Admin</span>
+                </button>
+              </div>
             </motion.div>
           </div>
         </section>
@@ -588,7 +897,6 @@ export default function App() {
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {/* Instagram */}
               <motion.a
                 href={INSTAGRAM_URL}
                 target="_blank"
@@ -620,7 +928,6 @@ export default function App() {
                 </div>
               </motion.a>
 
-              {/* Facebook */}
               <motion.a
                 href={FACEBOOK_URL}
                 target="_blank"
@@ -647,7 +954,6 @@ export default function App() {
                 </div>
               </motion.a>
 
-              {/* YouTube */}
               <motion.a
                 href={YOUTUBE_URL}
                 target="_blank"
@@ -700,7 +1006,6 @@ export default function App() {
             जय श्री राम 🙏
           </p>
 
-          {/* Social links row */}
           <div className="flex justify-center gap-4 mb-6">
             <a
               href={INSTAGRAM_URL}
@@ -734,7 +1039,7 @@ export default function App() {
             </a>
           </div>
 
-          <div className="border-t border-saffron-700/40 pt-5 space-y-2">
+          <div className="border-t border-saffron-700/40 pt-5 space-y-4">
             <p className="text-saffron-600 text-xs">
               © {new Date().getFullYear()}. Built with{" "}
               <Heart className="inline w-3 h-3 text-saffron-500" /> using{" "}
@@ -747,15 +1052,229 @@ export default function App() {
                 caffeine.ai
               </a>
             </p>
-            <p className="text-saffron-600/70 text-xs">
-              Website Designed by:{" "}
-              <span className="text-saffron-500 font-medium">
-                Prakash Kumar
-              </span>
-            </p>
+
+            {/* Enhanced designer credit */}
+            <div
+              className="inline-block px-6 py-3 rounded-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.25 0.08 50 / 0.6), oklch(0.30 0.10 55 / 0.4))",
+                border: "1.5px solid oklch(0.62 0.18 50 / 0.6)",
+                boxShadow:
+                  "0 0 20px oklch(0.62 0.18 50 / 0.15), inset 0 1px 0 oklch(0.75 0.14 58 / 0.2)",
+              }}
+            >
+              <p className="text-saffron-300 text-xl font-semibold tracking-wide">
+                🎨 Website Designed by:{" "}
+                <span
+                  className="font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.82 0.14 65), oklch(0.72 0.18 55), oklch(0.82 0.14 65))",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Prakash Kumar
+                </span>{" "}
+                ✨
+              </p>
+            </div>
           </div>
         </div>
       </footer>
+
+      {/* ── ADMIN MODAL ── */}
+      <AnimatePresence>
+        {adminOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.7)" }}
+            onClick={(e) => e.target === e.currentTarget && handleAdminClose()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
+              data-ocid="admin.dialog"
+              className="relative w-full max-w-2xl rounded-2xl overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.96 0.03 82), oklch(0.98 0.02 87))",
+                border: "2px solid oklch(0.75 0.14 58)",
+                boxShadow: "0 24px 80px rgba(0,0,0,0.5)",
+                maxHeight: "90vh",
+              }}
+            >
+              {/* Modal Header */}
+              <div
+                className="flex items-center justify-between px-6 py-4"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.45 0.16 46), oklch(0.38 0.14 42))",
+                  borderBottom: "1px solid oklch(0.62 0.18 50 / 0.4)",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-saffron-300" />
+                  <h3 className="hindi-text text-saffron-100 text-lg font-bold">
+                    Admin Panel — दान रिकॉर्ड
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  data-ocid="admin.close_button"
+                  onClick={handleAdminClose}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-saffron-300 hover:text-saffron-100 hover:bg-white/10 transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div
+                className="p-6 overflow-y-auto"
+                style={{ maxHeight: "calc(90vh - 80px)" }}
+              >
+                {!adminAuthenticated ? (
+                  // PIN Entry
+                  <div className="max-w-xs mx-auto text-center py-4">
+                    <div className="text-4xl mb-4">🔐</div>
+                    <p className="hindi-text text-saffron-700 mb-6 font-medium">
+                      PIN दर्ज करें
+                    </p>
+                    <form onSubmit={handleAdminPinSubmit} className="space-y-4">
+                      <input
+                        type="password"
+                        maxLength={4}
+                        value={adminPin}
+                        onChange={(e) => {
+                          setAdminPin(e.target.value);
+                          setAdminPinError(false);
+                        }}
+                        placeholder="• • • •"
+                        data-ocid="admin.input"
+                        className="w-full text-center text-2xl tracking-widest px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all"
+                      />
+                      {adminPinError && (
+                        <p
+                          data-ocid="admin.error_state"
+                          className="hindi-text text-red-600 text-sm"
+                        >
+                          ❌ गलत PIN। पुनः प्रयास करें।
+                        </p>
+                      )}
+                      <button
+                        type="submit"
+                        data-ocid="admin.submit_button"
+                        className="btn-saffron hindi-text w-full py-3 rounded-xl font-bold"
+                      >
+                        प्रवेश करें
+                      </button>
+                      <button
+                        type="button"
+                        data-ocid="admin.cancel_button"
+                        onClick={handleAdminClose}
+                        className="hindi-text w-full py-2 text-saffron-500 text-sm hover:text-saffron-700 transition-colors"
+                      >
+                        रद्द करें
+                      </button>
+                    </form>
+                  </div>
+                ) : loadingDonations ? (
+                  // Loading
+                  <div
+                    data-ocid="admin.loading_state"
+                    className="text-center py-10"
+                  >
+                    <Loader2 className="w-8 h-8 animate-spin text-saffron-500 mx-auto mb-3" />
+                    <p className="hindi-text text-saffron-600">
+                      डेटा लोड हो रहा है...
+                    </p>
+                  </div>
+                ) : donations.length === 0 ? (
+                  // Empty state
+                  <div
+                    data-ocid="admin.empty_state"
+                    className="text-center py-10"
+                  >
+                    <div className="text-4xl mb-3">📭</div>
+                    <p className="hindi-text text-saffron-600 font-medium">
+                      अभी कोई दान रिकॉर्ड नहीं है।
+                    </p>
+                  </div>
+                ) : (
+                  // Donations list
+                  <div>
+                    <p className="hindi-text text-saffron-600 text-sm mb-4">
+                      कुल रिकॉर्ड:{" "}
+                      <strong className="text-saffron-800">
+                        {donations.length}
+                      </strong>
+                    </p>
+                    <div className="space-y-3">
+                      {donations.map((d, i) => (
+                        <motion.div
+                          key={d.name + d.phone + String(d.timestamp)}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          data-ocid={`admin.item.${i + 1}`}
+                          className="rounded-xl p-4"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, oklch(0.94 0.04 78), oklch(0.97 0.02 85))",
+                            border: "1px solid oklch(0.82 0.10 60)",
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, oklch(0.62 0.18 50), oklch(0.52 0.20 44))",
+                                }}
+                              >
+                                {i + 1}
+                              </div>
+                              <div>
+                                <p className="hindi-text text-saffron-900 font-bold">
+                                  {d.name}
+                                </p>
+                                <p className="text-saffron-600 text-xs">
+                                  {d.phone}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-saffron-800 font-bold text-lg">
+                                ₹{d.amount}
+                              </p>
+                              <p className="text-saffron-400 text-xs">
+                                {formatTimestamp(d.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                          {d.note && (
+                            <p className="hindi-text text-saffron-600 text-sm mt-2 pl-11 italic">
+                              "{d.note}"
+                            </p>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -8,10 +8,40 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const idlService = IDL.Service({});
+export const Time = IDL.Int;
+export const Donation = IDL.Record({
+  'name' : IDL.Text,
+  'note' : IDL.Text,
+  'timestamp' : Time,
+  'phone' : IDL.Text,
+  'amount' : IDL.Text,
+});
+
+export const idlService = IDL.Service({
+  'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
+  'submitDonation' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+});
 
 export const idlInitArgs = [];
 
-export const idlFactory = ({ IDL }) => { return IDL.Service({}); };
+export const idlFactory = ({ IDL }) => {
+  const Time = IDL.Int;
+  const Donation = IDL.Record({
+    'name' : IDL.Text,
+    'note' : IDL.Text,
+    'timestamp' : Time,
+    'phone' : IDL.Text,
+    'amount' : IDL.Text,
+  });
+  
+  return IDL.Service({
+    'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
+    'submitDonation' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+        [],
+        [],
+      ),
+  });
+};
 
 export const init = ({ IDL }) => { return []; };

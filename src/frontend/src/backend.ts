@@ -89,10 +89,48 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface Donation {
+    name: string;
+    note: string;
+    timestamp: Time;
+    phone: string;
+    amount: string;
+}
+export type Time = bigint;
 export interface backendInterface {
+    getAllDonations(): Promise<Array<Donation>>;
+    submitDonation(name: string, phone: string, amount: string, note: string): Promise<void>;
 }
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async getAllDonations(): Promise<Array<Donation>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllDonations();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllDonations();
+            return result;
+        }
+    }
+    async submitDonation(arg0: string, arg1: string, arg2: string, arg3: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
 }
 export interface CreateActorOptions {
     agent?: Agent;

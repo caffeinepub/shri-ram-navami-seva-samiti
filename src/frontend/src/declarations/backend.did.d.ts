@@ -10,7 +10,18 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface _SERVICE {}
+export interface Donation {
+  'name' : string,
+  'note' : string,
+  'timestamp' : Time,
+  'phone' : string,
+  'amount' : string,
+}
+export type Time = bigint;
+export interface _SERVICE {
+  'getAllDonations' : ActorMethod<[], Array<Donation>>,
+  'submitDonation' : ActorMethod<[string, string, string, string], undefined>,
+}
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
 export declare const idlFactory: IDL.InterfaceFactory;
