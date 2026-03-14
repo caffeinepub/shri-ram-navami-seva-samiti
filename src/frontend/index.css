@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Poppins:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Saffron/Gold devotional theme */
+    --background: 0.97 0.02 85;
+    --foreground: 0.18 0.04 45;
+
+    --card: 0.96 0.025 80;
+    --card-foreground: 0.18 0.04 45;
+
+    --popover: 0.97 0.02 85;
+    --popover-foreground: 0.18 0.04 45;
+
+    --primary: 0.62 0.18 50;
+    --primary-foreground: 0.99 0.005 90;
+
+    --secondary: 0.88 0.06 75;
+    --secondary-foreground: 0.25 0.06 45;
+
+    --muted: 0.92 0.03 75;
+    --muted-foreground: 0.45 0.05 50;
+
+    --accent: 0.75 0.14 55;
+    --accent-foreground: 0.99 0.005 90;
+
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.99 0 0;
+
+    --border: 0.85 0.06 65;
+    --input: 0.85 0.06 65;
+    --ring: 0.62 0.18 50;
+
+    --radius: 0.75rem;
+
+    --chart-1: 0.62 0.18 50;
+    --chart-2: 0.55 0.14 30;
+    --chart-3: 0.75 0.14 55;
+    --chart-4: 0.45 0.12 40;
+    --chart-5: 0.82 0.10 70;
+
+    --sidebar: 0.94 0.035 75;
+    --sidebar-foreground: 0.18 0.04 45;
+    --sidebar-primary: 0.62 0.18 50;
+    --sidebar-primary-foreground: 0.99 0.005 90;
+    --sidebar-accent: 0.88 0.06 75;
+    --sidebar-accent-foreground: 0.25 0.06 45;
+    --sidebar-border: 0.85 0.06 65;
+    --sidebar-ring: 0.62 0.18 50;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', 'Tiro Devanagari Hindi', serif;
+  }
+}
+
+.hindi-text {
+  font-family: 'Tiro Devanagari Hindi', 'Poppins', serif;
+}
+
+/* Decorative divider */
+.divider-om {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.divider-om::before,
+.divider-om::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.62 0.18 50), transparent);
+}
+
+/* Hero gradient overlay */
+.hero-overlay {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.35 0.12 50 / 0.5),
+    oklch(0.20 0.08 40 / 0.7)
+  );
+}
+
+/* Festive card */
+.festive-card {
+  background: linear-gradient(135deg,
+    oklch(0.97 0.03 85),
+    oklch(0.94 0.05 75)
+  );
+  border: 1px solid oklch(0.82 0.10 60);
+  box-shadow: 0 4px 24px oklch(0.62 0.18 50 / 0.12);
+}
+
+/* Gold text */
+.gold-text {
+  background: linear-gradient(135deg, oklch(0.55 0.18 55), oklch(0.72 0.15 65), oklch(0.55 0.18 55));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Saffron button */
+.btn-saffron {
+  background: linear-gradient(135deg, oklch(0.62 0.18 50), oklch(0.55 0.20 45));
+  color: oklch(0.99 0.005 90);
+  transition: all 0.3s ease;
+}
+.btn-saffron:hover {
+  background: linear-gradient(135deg, oklch(0.55 0.20 45), oklch(0.48 0.20 40));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px oklch(0.62 0.18 50 / 0.35);
+}
+
+/* Section background alternating */
+.section-warm {
+  background: linear-gradient(180deg,
+    oklch(0.96 0.03 80),
+    oklch(0.98 0.02 85)
+  );
+}
+.section-deep {
+  background: linear-gradient(180deg,
+    oklch(0.28 0.08 42),
+    oklch(0.22 0.07 40)
+  );
+}
+
+/* QR code border */
+.qr-border {
+  border: 3px solid oklch(0.62 0.18 50);
+  box-shadow: 0 0 0 6px oklch(0.82 0.10 65 / 0.4), 0 8px 32px oklch(0.50 0.18 45 / 0.2);
+}
+
+/* Scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Lotus decoration */
+.lotus-divider {
+  text-align: center;
+  color: oklch(0.62 0.18 50);
+  font-size: 1.5rem;
+  letter-spacing: 0.5rem;
+  margin: 1rem 0;
+}
