@@ -95,11 +95,28 @@ export interface Donation {
     timestamp: Time;
     phone: string;
     amount: string;
+    screenshot: string;
 }
 export type Time = bigint;
+export interface MemberApplication {
+    id: bigint;
+    name: string;
+    phone: string;
+    address: string;
+    occupation: string;
+    photo: string;
+    status: string;
+    timestamp: Time;
+}
 export interface backendInterface {
     getAllDonations(): Promise<Array<Donation>>;
-    submitDonation(name: string, phone: string, amount: string, note: string): Promise<void>;
+    submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
+    clearAllDonations(): Promise<void>;
+    deleteDonationById(id: bigint): Promise<void>;
+    submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
+    getAllMemberApplications(): Promise<Array<MemberApplication>>;
+    approveMemberApplication(id: bigint): Promise<void>;
+    deleteMemberApplication(id: bigint): Promise<void>;
 }
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
@@ -117,18 +134,77 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitDonation(arg0: string, arg1: string, arg2: string, arg3: string): Promise<void> {
+    async submitDonation(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3);
+                const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3, arg4);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3);
+            const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3, arg4);
             return result;
+        }
+    }
+    async clearAllDonations(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.clearAllDonations();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.clearAllDonations();
+            return result;
+        }
+    }
+    async deleteDonationById(id: bigint): Promise<void> {
+        try {
+            const result = await (this.actor as any).deleteDonationById(id);
+            return result;
+        } catch (e) {
+            if (this.processError) this.processError(e);
+            throw e;
+        }
+    }
+    async submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint> {
+        try {
+            const result = await (this.actor as any).submitMemberApplication(name, phone, address, occupation, photo);
+            return result;
+        } catch (e) {
+            if (this.processError) this.processError(e);
+            throw e;
+        }
+    }
+    async getAllMemberApplications(): Promise<Array<MemberApplication>> {
+        try {
+            const result = await (this.actor as any).getAllMemberApplications();
+            return result;
+        } catch (e) {
+            if (this.processError) this.processError(e);
+            throw e;
+        }
+    }
+    async approveMemberApplication(id: bigint): Promise<void> {
+        try {
+            const result = await (this.actor as any).approveMemberApplication(id);
+            return result;
+        } catch (e) {
+            if (this.processError) this.processError(e);
+            throw e;
+        }
+    }
+    async deleteMemberApplication(id: bigint): Promise<void> {
+        try {
+            const result = await (this.actor as any).deleteMemberApplication(id);
+            return result;
+        } catch (e) {
+            if (this.processError) this.processError(e);
+            throw e;
         }
     }
 }

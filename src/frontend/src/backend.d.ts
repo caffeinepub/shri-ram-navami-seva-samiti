@@ -13,9 +13,26 @@ export interface Donation {
     timestamp: Time;
     phone: string;
     amount: string;
+    screenshot: string;
+}
+export interface MemberApplication {
+    id: bigint;
+    name: string;
+    phone: string;
+    address: string;
+    occupation: string;
+    photo: string;
+    status: string;
+    timestamp: Time;
 }
 export type Time = bigint;
 export interface backendInterface {
     getAllDonations(): Promise<Array<Donation>>;
-    submitDonation(name: string, phone: string, amount: string, note: string): Promise<void>;
+    submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
+    clearAllDonations(): Promise<void>;
+    deleteDonationById(id: bigint): Promise<void>;
+    submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
+    getAllMemberApplications(): Promise<Array<MemberApplication>>;
+    approveMemberApplication(id: bigint): Promise<void>;
+    deleteMemberApplication(id: bigint): Promise<void>;
 }

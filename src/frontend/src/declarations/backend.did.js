@@ -15,11 +15,13 @@ export const Donation = IDL.Record({
   'timestamp' : Time,
   'phone' : IDL.Text,
   'amount' : IDL.Text,
+  'screenshot' : IDL.Text,
 });
 
 export const idlService = IDL.Service({
   'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
-  'submitDonation' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+  'submitDonation' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+  'clearAllDonations' : IDL.Func([], [], []),
 });
 
 export const idlInitArgs = [];
@@ -32,15 +34,17 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : Time,
     'phone' : IDL.Text,
     'amount' : IDL.Text,
+    'screenshot' : IDL.Text,
   });
   
   return IDL.Service({
     'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
     'submitDonation' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [],
         [],
       ),
+    'clearAllDonations' : IDL.Func([], [], []),
   });
 };
 

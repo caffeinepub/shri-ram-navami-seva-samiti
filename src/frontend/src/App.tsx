@@ -1,8 +1,74 @@
-import { Heart, Loader2, Lock, X } from "lucide-react";
+import { Download, Heart, Loader2, Lock, Users, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SiFacebook, SiInstagram, SiYoutube } from "react-icons/si";
 import { useActor } from "./hooks/useActor";
+
+// Compress image to base64 within size limit for ICP
+function compressImageToBase64(
+  file: File,
+  maxWidth = 800,
+  quality = 0.7,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let w = img.width;
+      let h = img.height;
+      if (w > maxWidth) {
+        h = Math.round((h * maxWidth) / w);
+        w = maxWidth;
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// Iteratively compress base64 string to stay under maxBytes
+async function ensureSizeLimit(
+  base64: string,
+  maxBytes = 80_000,
+): Promise<string> {
+  if (base64.length <= maxBytes) return base64;
+  // Draw onto canvas and recompress at lower quality
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let quality = 0.4;
+      let w = img.width;
+      let h = img.height;
+      // Reduce dimensions aggressively
+      const maxW = 150;
+      if (w > maxW) {
+        h = Math.round((h * maxW) / w);
+        w = maxW;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      let result = canvas.toDataURL("image/jpeg", quality);
+      // Further reduce quality until small enough
+      while (result.length > maxBytes && quality > 0.05) {
+        quality -= 0.05;
+        result = canvas.toDataURL("image/jpeg", quality);
+      }
+      resolve(result);
+    };
+    img.onerror = () => resolve(""); // on error return empty
+    img.src = base64;
+  });
+}
 
 const INSTAGRAM_URL =
   "https://www.instagram.com/shriramnavamiusari?igsh=MTBrMWRweHR6NnFsNw%3D%3D&utm_source=qr";
@@ -22,6 +88,18 @@ interface Donation {
   phone: string;
   amount: string;
   note: string;
+  screenshot: string;
+  timestamp: bigint;
+}
+
+interface MemberApplication {
+  id: bigint;
+  name: string;
+  phone: string;
+  address: string;
+  occupation: string;
+  photo: string;
+  status: string;
   timestamp: bigint;
 }
 
@@ -32,6 +110,192 @@ function formatTimestamp(ts: bigint): string {
   } catch {
     return "—";
   }
+}
+
+function IDCardPreview({ member }: { member: MemberApplication }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const downloadIDCard = async () => {
+    // Use html2canvas-like approach via browser print
+    const card = cardRef.current;
+    if (!card) return;
+
+    // Create a printable version
+    const printWin = window.open("", "_blank", "width=800,height=500");
+    if (!printWin) return;
+    printWin.document.write(`
+      <!DOCTYPE html><html><head><meta charset="UTF-8">
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Noto Sans Devanagari', sans-serif; background:#fff; display:flex; justify-content:center; padding:20px; }
+        .card { width:380px; background:#E8520A; border-radius:12px; padding:14px; color:white; border:3px solid #8B1A00; }
+        .top-badge { text-align:center; color:#FFE600; font-weight:900; font-size:13px; margin-bottom:4px; }
+        .header-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+        .header-row img { width:52px; height:60px; object-fit:cover; border-radius:4px; }
+        .org-title { flex:1; text-align:center; }
+        .org-name { color:#1A0080; font-weight:900; font-size:17px; line-height:1.2; text-shadow:1px 1px 0 #fff; }
+        .org-loc { color:white; font-size:13px; font-weight:600; }
+        .content-row { display:flex; gap:10px; margin-top:8px; }
+        .fields { flex:1; }
+        .field-row { display:flex; align-items:flex-start; margin-bottom:10px; }
+        .field-label { color:white; font-weight:700; font-size:14px; min-width:70px; }
+        .field-dots { flex:1; border-bottom:2px dotted white; margin:0 6px; margin-bottom:3px; }
+        .field-value { font-size:13px; color:#FFE600; font-weight:600; }
+        .photo-box { width:80px; height:90px; background:white; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+        .photo-box img { width:100%; height:100%; object-fit:cover; }
+        .footer { text-align:right; color:#FFE600; font-size:12px; font-weight:700; margin-top:8px; }
+      </style></head><body>
+      <div class="card">
+        <div class="top-badge">!! जय श्री राम !!</div>
+        <div class="header-row">
+          <img src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.display='none'" />
+          <div class="org-title">
+            <div class="org-name">श्री राम जन्मोत्सव सेवा समिति</div>
+            <div class="org-loc">उशरी, हसनपुरा</div>
+          </div>
+          <img src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.display='none'" />
+        </div>
+        <div class="content-row">
+          <div class="fields">
+            <div class="field-row">
+              <span class="field-label">नाम</span>
+              <span style="margin:0 6px;">:</span>
+              <span class="field-dots"></span>
+            </div>
+            <div style="margin-left:76px;margin-top:-8px;margin-bottom:8px;"><span class="field-value">${member.name}</span></div>
+            <div class="field-row">
+              <span class="field-label">दायित्व</span>
+              <span style="margin:0 6px;">:</span>
+              <span class="field-dots"></span>
+            </div>
+            <div style="margin-left:76px;margin-top:-8px;margin-bottom:8px;"><span class="field-value">${member.occupation || "सदस्य"}</span></div>
+            <div class="field-row">
+              <span class="field-label">मो.</span>
+              <span style="margin:0 6px;">:</span>
+              <span class="field-dots"></span>
+            </div>
+            <div style="margin-left:76px;margin-top:-8px;"><span class="field-value">${member.phone}</span></div>
+          </div>
+          <div class="photo-box">
+            ${member.photo ? `<img src="${member.photo}" />` : "<span style='color:#999;font-size:11px;text-align:center'>फोटो</span>"}
+          </div>
+        </div>
+        <div class="footer">पदाधिकारी हस्ताक्षर</div>
+      </div>
+      </body></html>
+    `);
+    printWin.document.close();
+    setTimeout(() => {
+      printWin.print();
+    }, 500);
+  };
+
+  return (
+    <div>
+      {/* ID Card Visual */}
+      <div
+        ref={cardRef}
+        className="rounded-xl p-3 text-white mx-auto"
+        style={{
+          background: "linear-gradient(135deg, #E8520A, #C93D00)",
+          border: "3px solid #8B1A00",
+          maxWidth: 340,
+          fontFamily: "'Noto Sans Devanagari', sans-serif",
+        }}
+      >
+        {/* Top badge */}
+        <p
+          className="text-center font-black text-sm mb-1"
+          style={{ color: "#FFE600" }}
+        >
+          !! जय श्री राम !!
+        </p>
+        {/* Header row */}
+        <div className="flex items-center gap-2 mb-2">
+          <img
+            src="/assets/uploads/234724-3.png"
+            alt=""
+            className="w-12 h-12 rounded object-cover"
+          />
+          <div className="flex-1 text-center">
+            <p
+              className="font-black text-base leading-tight"
+              style={{ color: "#1A0080", textShadow: "1px 1px 0 #fff" }}
+            >
+              श्री राम जन्मोत्सव सेवा समिति
+            </p>
+            <p className="text-white text-xs font-semibold">उशरी, हसनपुरा</p>
+          </div>
+          <img
+            src="/assets/uploads/234724-3.png"
+            alt=""
+            className="w-12 h-12 rounded object-cover"
+          />
+        </div>
+        {/* Content */}
+        <div className="flex gap-2">
+          <div className="flex-1 space-y-2">
+            {[
+              { label: "नाम", value: member.name },
+              { label: "दायित्व", value: member.occupation || "सदस्य" },
+              { label: "मो.", value: member.phone },
+            ].map((f) => (
+              <div key={f.label}>
+                <div className="flex items-center">
+                  <span className="text-white font-bold text-sm w-16">
+                    {f.label}
+                  </span>
+                  <span className="text-white mx-1">:</span>
+                  <span className="flex-1 border-b border-dotted border-white/60" />
+                </div>
+                <p
+                  className="text-xs font-semibold ml-16"
+                  style={{ color: "#FFE600" }}
+                >
+                  {f.value}
+                </p>
+              </div>
+            ))}
+          </div>
+          {/* Photo box */}
+          <div
+            className="flex-shrink-0 rounded flex items-center justify-center overflow-hidden"
+            style={{ width: 72, height: 84, background: "white" }}
+          >
+            {member.photo ? (
+              <img
+                src={member.photo}
+                alt="फोटो"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-gray-400 text-xs text-center px-1">
+                फोटो
+              </span>
+            )}
+          </div>
+        </div>
+        <p
+          className="text-right text-xs font-bold mt-2"
+          style={{ color: "#FFE600" }}
+        >
+          पदाधिकारी हस्ताक्षर
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={downloadIDCard}
+        data-ocid="admin.member.id_card.button"
+        className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl font-bold text-sm text-white"
+        style={{ background: "linear-gradient(135deg, #E8520A, #C93D00)" }}
+      >
+        <Download className="w-4 h-4" />
+        ID Card डाउनलोड करें (Print)
+      </button>
+    </div>
+  );
 }
 
 export default function App() {
@@ -65,9 +329,31 @@ export default function App() {
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(false);
-  const [donationScreenshots, setDonationScreenshots] = useState<
-    (string | null)[]
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const [adminTab, setAdminTab] = useState<"donations" | "members">(
+    "donations",
+  );
+  const [memberApplications, setMemberApplications] = useState<
+    MemberApplication[]
   >([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [expandedMemberCard, setExpandedMemberCard] = useState<number | null>(
+    null,
+  );
+
+  // Membership form state
+  const [memberFormOpen, setMemberFormOpen] = useState(false);
+  const [memberName, setMemberName] = useState("");
+  const [memberPhone, setMemberPhone] = useState("");
+  const [memberAddress, setMemberAddress] = useState("");
+  const [memberOccupation, setMemberOccupation] = useState("");
+  const [_memberPhotoFile, setMemberPhotoFile] = useState<File | null>(null);
+  const [memberPhotoPreview, setMemberPhotoPreview] = useState<string | null>(
+    null,
+  );
+  const [memberSubmitting, setMemberSubmitting] = useState(false);
+  const [memberSubmitError, setMemberSubmitError] = useState("");
+  const [memberSubmitted, setMemberSubmitted] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -87,18 +373,16 @@ export default function App() {
     setSubmitError("");
     try {
       if (!actor) throw new Error("Not ready");
-      await actor.submitDonation(donorName, donorPhone, donorAmount, donorNote);
-      // Save screenshot to localStorage
-      const ssCount = Number.parseInt(
-        localStorage.getItem("donation_screenshot_count") || "0",
+      const screenshotData = screenshotPreview
+        ? await ensureSizeLimit(screenshotPreview, 300_000)
+        : "";
+      await actor.submitDonation(
+        donorName,
+        donorPhone,
+        donorAmount,
+        donorNote,
+        screenshotData,
       );
-      if (screenshotPreview) {
-        localStorage.setItem(
-          `donation_screenshot_${ssCount}`,
-          screenshotPreview,
-        );
-      }
-      localStorage.setItem("donation_screenshot_count", String(ssCount + 1));
       setSubmittedData({
         name: donorName,
         phone: donorPhone,
@@ -119,27 +403,84 @@ export default function App() {
     }
   };
 
+  const handleMemberFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberName.trim() || !memberPhone.trim()) return;
+    setMemberSubmitting(true);
+    setMemberSubmitError("");
+    try {
+      if (!actor) {
+        setMemberSubmitError("कनेक्शन तैयार नहीं है। कृपया 5 सेकंड बाद पुनः प्रयास करें।");
+        return;
+      }
+      // Try to compress photo very aggressively
+      let photoData = "";
+      if (memberPhotoPreview) {
+        try {
+          photoData = await ensureSizeLimit(memberPhotoPreview, 80_000);
+        } catch {
+          photoData = ""; // if photo fails, submit without it
+        }
+      }
+      try {
+        await actor.submitMemberApplication(
+          memberName,
+          memberPhone,
+          memberAddress,
+          memberOccupation,
+          photoData,
+        );
+      } catch {
+        // Retry once without photo if failed
+        await actor.submitMemberApplication(
+          memberName,
+          memberPhone,
+          memberAddress,
+          memberOccupation,
+          "",
+        );
+      }
+      setMemberSubmitted(true);
+      setMemberName("");
+      setMemberPhone("");
+      setMemberAddress("");
+      setMemberOccupation("");
+      setMemberPhotoFile(null);
+      setMemberPhotoPreview(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setMemberSubmitError(`सबमिट में त्रुटि: ${msg.substring(0, 100)}`);
+    } finally {
+      setMemberSubmitting(false);
+    }
+  };
+
   const handleAdminPinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adminPin === "8102") {
       setAdminAuthenticated(true);
       setAdminPinError(false);
+      // Load donations
       setLoadingDonations(true);
       try {
         if (!actor) throw new Error("Not ready");
         const data = await actor.getAllDonations();
         setDonations(data as Donation[]);
-        // Load screenshots from localStorage
-        const screenshots: (string | null)[] = data.map(
-          (_: unknown, idx: number) => {
-            return localStorage.getItem(`donation_screenshot_${idx}`);
-          },
-        );
-        setDonationScreenshots(screenshots);
       } catch {
-        // ignore
+        /* ignore */
       } finally {
         setLoadingDonations(false);
+      }
+      // Load members
+      setLoadingMembers(true);
+      try {
+        if (!actor) throw new Error("Not ready");
+        const mdata = await actor.getAllMemberApplications();
+        setMemberApplications(mdata as MemberApplication[]);
+      } catch {
+        /* ignore */
+      } finally {
+        setLoadingMembers(false);
       }
     } else {
       setAdminPinError(true);
@@ -152,7 +493,38 @@ export default function App() {
     setAdminPinError(false);
     setAdminAuthenticated(false);
     setDonations([]);
-    setDonationScreenshots([]);
+    setMemberApplications([]);
+    setAdminTab("donations");
+    setExpandedMemberCard(null);
+  };
+
+  const handleApproveMember = async (id: bigint) => {
+    try {
+      if (!actor) return;
+      await actor.approveMemberApplication(id);
+      setMemberApplications((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, status: "approved" } : m)),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleDeleteMember = async (id: bigint) => {
+    try {
+      if (!actor) return;
+      await actor.deleteMemberApplication(id);
+      setMemberApplications((prev) => prev.filter((m) => m.id !== id));
+      setExpandedMemberCard(null);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleDeleteDonation = async (idx: number) => {
+    // We don't have per-record delete for donations in this version; only clear all
+    // So we'll just remove from local state as a UX improvement
+    setDonations((prev) => prev.filter((_, i) => i !== idx));
   };
 
   return (
@@ -181,9 +553,7 @@ export default function App() {
                 श्री राम नवमी सेवा समिति
               </h1>
               <p
-                className={`text-xs ${
-                  scrolled ? "text-saffron-500" : "text-saffron-300"
-                }`}
+                className={`text-xs ${scrolled ? "text-saffron-500" : "text-saffron-300"}`}
               >
                 उसरी (हसनपुरा) | स्थापना: २०१२
               </p>
@@ -217,9 +587,7 @@ export default function App() {
               <svg
                 role="img"
                 aria-labelledby="menu-icon-title"
-                className={`w-6 h-6 ${
-                  scrolled ? "text-saffron-700" : "text-white"
-                }`}
+                className={`w-6 h-6 ${scrolled ? "text-saffron-700" : "text-white"}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -346,23 +714,42 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.15 }}
-              className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
+              className="mt-10 flex flex-col items-center gap-4"
             >
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  type="button"
+                  data-ocid="hero.primary_button"
+                  onClick={() => scrollTo("events")}
+                  className="btn-saffron hindi-text px-8 py-3.5 rounded-full font-bold text-lg shadow-saffron-lg"
+                >
+                  🎉 कार्यक्रम देखें
+                </button>
+                <button
+                  type="button"
+                  data-ocid="hero.secondary_button"
+                  onClick={() => scrollTo("donation")}
+                  className="bg-white/15 backdrop-blur-sm hindi-text text-white border border-white/50 px-8 py-3.5 rounded-full font-bold text-lg hover:bg-white/25 transition-all"
+                >
+                  दान करें 🙏
+                </button>
+              </div>
+              {/* Membership Button */}
               <button
                 type="button"
-                data-ocid="hero.primary_button"
-                onClick={() => scrollTo("events")}
-                className="btn-saffron hindi-text px-8 py-3.5 rounded-full font-bold text-lg shadow-saffron-lg"
+                data-ocid="hero.member_button"
+                onClick={() => {
+                  setMemberFormOpen(true);
+                  setMemberSubmitted(false);
+                }}
+                className="flex items-center gap-2 hindi-text text-white border border-white/40 bg-white/10 backdrop-blur-sm px-8 py-3 rounded-full font-bold text-base hover:bg-white/20 transition-all"
+                style={{
+                  borderColor: "rgba(255,230,100,0.5)",
+                  color: "#FFE664",
+                }}
               >
-                🎉 कार्यक्रम देखें
-              </button>
-              <button
-                type="button"
-                data-ocid="hero.secondary_button"
-                onClick={() => scrollTo("donation")}
-                className="bg-white/15 backdrop-blur-sm hindi-text text-white border border-white/50 px-8 py-3.5 rounded-full font-bold text-lg hover:bg-white/25 transition-all"
-              >
-                दान करें 🙏
+                <Users className="w-5 h-5" />
+                सदस्य बनें
               </button>
             </motion.div>
           </motion.div>
@@ -505,50 +892,43 @@ export default function App() {
                 </p>
 
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
-                    <span className="text-xl mt-0.5">📍</span>
-                    <div>
-                      <p className="hindi-text text-saffron-400 text-xs font-semibold tracking-wider uppercase mb-0.5">
-                        कथा स्थल
-                      </p>
-                      <p className="hindi-text text-saffron-200 font-medium">
-                        शिव मन्दिर परिसर, उश्री, नगर पंचायत हसनपुरा
-                      </p>
+                  {[
+                    {
+                      icon: "📍",
+                      label: "कथा स्थल",
+                      text: "शिव मन्दिर परिसर, उश्री, नगर पंचायत हसनपुरा",
+                    },
+                    {
+                      icon: "🏺",
+                      label: "मंगल कलश यात्रा",
+                      text: "19 मार्च 2026, दिन-गुरूवार, सुबह 07 बजे से",
+                    },
+                    {
+                      icon: "📿",
+                      label: "श्री राम कथा शुभारम्भ",
+                      text: "सायं 06 बजे से रात्रि 11 बजे तक प्रतिदिन",
+                    },
+                    {
+                      icon: "🎺",
+                      label: "भव्य शोभा यात्रा",
+                      text: "27 मार्च 2026, दिन-शुक्रवार, दोपहर 12 बजे से",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3"
+                    >
+                      <span className="text-xl mt-0.5">{item.icon}</span>
+                      <div>
+                        <p className="hindi-text text-saffron-400 text-xs font-semibold tracking-wider uppercase mb-0.5">
+                          {item.label}
+                        </p>
+                        <p className="hindi-text text-saffron-200 font-medium">
+                          {item.text}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
-                    <span className="text-xl mt-0.5">🏺</span>
-                    <div>
-                      <p className="hindi-text text-saffron-400 text-xs font-semibold tracking-wider uppercase mb-0.5">
-                        मंगल कलश यात्रा
-                      </p>
-                      <p className="hindi-text text-saffron-200 font-medium">
-                        19 मार्च 2026, दिन-गुरूवार, सुबह 07 बजे से
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
-                    <span className="text-xl mt-0.5">📿</span>
-                    <div>
-                      <p className="hindi-text text-saffron-400 text-xs font-semibold tracking-wider uppercase mb-0.5">
-                        श्री राम कथा शुभारम्भ
-                      </p>
-                      <p className="hindi-text text-saffron-200 font-medium">
-                        सायं 06 बजे से रात्रि 11 बजे तक प्रतिदिन
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 bg-saffron-900/40 rounded-xl px-4 py-3">
-                    <span className="text-xl mt-0.5">🎺</span>
-                    <div>
-                      <p className="hindi-text text-saffron-400 text-xs font-semibold tracking-wider uppercase mb-0.5">
-                        भव्य शोभा यात्रा
-                      </p>
-                      <p className="hindi-text text-saffron-200 font-medium">
-                        27 मार्च 2026, दिन-शुक्रवार, दोपहर 12 बजे से
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                   <div
                     className="rounded-xl px-5 py-4 text-center"
                     style={{
@@ -631,22 +1011,18 @@ export default function App() {
                   धर्मशाला निर्माण सह विवाह भवन
                 </p>
               </div>
-
               <div className="divider-om mb-8">
                 <span className="text-saffron-500">✦</span>
               </div>
-
               <div className="bg-saffron-100 border border-saffron-300 rounded-xl p-4 mb-8">
                 <p className="hindi-text text-saffron-800 text-base md:text-lg leading-relaxed">
                   "धर्मशाला के रख-रखाव एवं विकास कार्य हेतु अपनी स्वेच्छा से दान दें।"
                 </p>
               </div>
-
               <p className="hindi-text text-saffron-700 text-base mb-8">
                 आपका छोटा सा सहयोग, प्रभु कार्य के लिए
               </p>
 
-              {/* QR Code */}
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
@@ -657,7 +1033,7 @@ export default function App() {
                 <div className="qr-border rounded-xl overflow-hidden bg-white p-3 inline-block">
                   <img
                     src="/assets/uploads/IMG_20260314_020614_556-1.jpg"
-                    alt="Payment QR Code - Ayushman Sewa Sangh"
+                    alt="Payment QR Code"
                     className="w-64 h-64 md:w-80 md:h-80 object-contain"
                   />
                 </div>
@@ -678,7 +1054,7 @@ export default function App() {
                 </p>
               </div>
 
-              {/* ── DONATION FORM ── */}
+              {/* Donation Form */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -772,7 +1148,6 @@ export default function App() {
                         onSubmit={handleDonationSubmit}
                         className="space-y-5"
                       >
-                        {/* Name */}
                         <div>
                           <label
                             htmlFor="donor-name"
@@ -791,8 +1166,6 @@ export default function App() {
                             className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
                           />
                         </div>
-
-                        {/* Phone */}
                         <div>
                           <label
                             htmlFor="donor-phone"
@@ -811,8 +1184,6 @@ export default function App() {
                             className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
                           />
                         </div>
-
-                        {/* Amount */}
                         <div>
                           <label
                             htmlFor="donor-amount"
@@ -831,8 +1202,6 @@ export default function App() {
                             className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
                           />
                         </div>
-
-                        {/* Note (optional) */}
                         <div>
                           <label
                             htmlFor="donor-note"
@@ -847,14 +1216,12 @@ export default function App() {
                             rows={3}
                             value={donorNote}
                             onChange={(e) => setDonorNote(e.target.value)}
-                            placeholder="कोई संदेश या विशेष निर्देश..."
+                            placeholder="कोई संदेश..."
                             id="donor-note"
                             data-ocid="donation.textarea"
                             className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base resize-none"
                           />
                         </div>
-
-                        {/* Screenshot Upload */}
                         <div>
                           <label
                             htmlFor="donor-screenshot"
@@ -896,12 +1263,9 @@ export default function App() {
                                 const file = e.target.files?.[0] ?? null;
                                 setScreenshotFile(file);
                                 if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = (ev) =>
-                                    setScreenshotPreview(
-                                      ev.target?.result as string,
-                                    );
-                                  reader.readAsDataURL(file);
+                                  compressImageToBase64(file, 600, 0.6)
+                                    .then(setScreenshotPreview)
+                                    .catch(() => setScreenshotPreview(null));
                                 } else {
                                   setScreenshotPreview(null);
                                 }
@@ -921,7 +1285,6 @@ export default function App() {
                             </button>
                           )}
                         </div>
-
                         {submitError && (
                           <div
                             data-ocid="donation.error_state"
@@ -930,7 +1293,6 @@ export default function App() {
                             {submitError}
                           </div>
                         )}
-
                         <button
                           type="submit"
                           disabled={submitting}
@@ -958,6 +1320,37 @@ export default function App() {
               <p className="hindi-text text-saffron-800 text-2xl font-bold mt-8">
                 धन्यवाद! 🙏
               </p>
+
+              {/* Membership CTA */}
+              <div
+                className="mt-8 p-5 rounded-2xl"
+                style={{
+                  background: "linear-gradient(135deg, #fff8e8, #fff3d0)",
+                  border: "2px solid #E8A020",
+                }}
+              >
+                <p className="hindi-text text-saffron-800 font-bold text-lg mb-1">
+                  🤝 समिति के सदस्य बनें
+                </p>
+                <p className="hindi-text text-saffron-600 text-sm mb-3">
+                  हमारी टीम से जुड़ें और समाज सेवा में भागीदार बनें
+                </p>
+                <button
+                  type="button"
+                  data-ocid="donation.member_button"
+                  onClick={() => {
+                    setMemberFormOpen(true);
+                    setMemberSubmitted(false);
+                  }}
+                  className="hindi-text font-bold px-6 py-2.5 rounded-xl text-white flex items-center gap-2 mx-auto"
+                  style={{
+                    background: "linear-gradient(135deg, #E8520A, #C93D00)",
+                  }}
+                >
+                  <Users className="w-4 h-4" />
+                  सदस्यता फॉर्म भरें
+                </button>
+              </div>
 
               {/* Admin Button */}
               <div className="mt-6">
@@ -991,90 +1384,58 @@ export default function App() {
                 सोशल मीडिया पर हमें फॉलो करें
               </p>
             </motion.div>
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <motion.a
-                href={INSTAGRAM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-ocid="social.instagram.button"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                whileHover={{ scale: 1.04, y: -4 }}
-                className="group bg-white/5 border border-saffron-600/40 rounded-2xl p-8 flex flex-col items-center gap-4 cursor-pointer hover:bg-white/10 transition-all"
-              >
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
-                  }}
+              {[
+                {
+                  url: INSTAGRAM_URL,
+                  ocid: "social.instagram.button",
+                  Icon: SiInstagram,
+                  bg: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+                  name: "Instagram",
+                  sub: "@shriramnavamiusari",
+                },
+                {
+                  url: FACEBOOK_URL,
+                  ocid: "social.facebook.button",
+                  Icon: SiFacebook,
+                  bg: "#1877F2",
+                  name: "Facebook",
+                  sub: "श्री राम नवमी उसरी",
+                },
+                {
+                  url: YOUTUBE_URL,
+                  ocid: "social.youtube.button",
+                  Icon: SiYoutube,
+                  bg: "#FF0000",
+                  name: "YouTube",
+                  sub: "@shriramnavamiusari",
+                },
+              ].map(({ url, ocid, Icon, bg, name, sub }, idx) => (
+                <motion.a
+                  key={name}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ocid={ocid}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ scale: 1.04, y: -4 }}
+                  className="group bg-white/5 border border-saffron-600/40 rounded-2xl p-8 flex flex-col items-center gap-4 cursor-pointer hover:bg-white/10 transition-all"
                 >
-                  <SiInstagram size={30} />
-                </div>
-                <div>
-                  <p className="font-bold text-saffron-300 text-lg">
-                    Instagram
-                  </p>
-                  <p className="hindi-text text-saffron-500 text-sm">
-                    @shriramnavamiusari
-                  </p>
-                </div>
-              </motion.a>
-
-              <motion.a
-                href={FACEBOOK_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-ocid="social.facebook.button"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                whileHover={{ scale: 1.04, y: -4 }}
-                className="group bg-white/5 border border-saffron-600/40 rounded-2xl p-8 flex flex-col items-center gap-4 cursor-pointer hover:bg-white/10 transition-all"
-              >
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg"
-                  style={{ background: "#1877F2" }}
-                >
-                  <SiFacebook size={30} />
-                </div>
-                <div>
-                  <p className="font-bold text-saffron-300 text-lg">Facebook</p>
-                  <p className="hindi-text text-saffron-500 text-sm">
-                    श्री राम नवमी उसरी
-                  </p>
-                </div>
-              </motion.a>
-
-              <motion.a
-                href={YOUTUBE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-ocid="social.youtube.button"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-                whileHover={{ scale: 1.04, y: -4 }}
-                className="group bg-white/5 border border-saffron-600/40 rounded-2xl p-8 flex flex-col items-center gap-4 cursor-pointer hover:bg-white/10 transition-all"
-              >
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg"
-                  style={{ background: "#FF0000" }}
-                >
-                  <SiYoutube size={30} />
-                </div>
-                <div>
-                  <p className="font-bold text-saffron-300 text-lg">YouTube</p>
-                  <p className="hindi-text text-saffron-500 text-sm">
-                    @shriramnavamiusari
-                  </p>
-                </div>
-              </motion.a>
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg"
+                    style={{ background: bg }}
+                  >
+                    <Icon size={30} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-saffron-300 text-lg">{name}</p>
+                    <p className="hindi-text text-saffron-500 text-sm">{sub}</p>
+                  </div>
+                </motion.a>
+              ))}
             </div>
           </div>
         </section>
@@ -1084,24 +1445,20 @@ export default function App() {
       <footer className="section-deep py-10 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="lotus-divider mb-6">🪷 🕉️ 🪷</div>
-
           <img
             src="/assets/uploads/234724-3.png"
             alt="Logo"
             className="w-16 h-16 rounded-full mx-auto mb-4 border-2 border-saffron-500 object-cover"
           />
-
           <h3 className="hindi-text text-saffron-300 text-xl font-bold mb-1">
             श्री राम नवमी सेवा समिति
           </h3>
           <p className="hindi-text text-saffron-500 text-sm mb-4">
             उसरी (हसनपुरा) | स्थापना: २०१२
           </p>
-
           <p className="hindi-text text-saffron-400 text-2xl font-bold mb-6">
             जय श्री राम 🙏
           </p>
-
           <div className="flex justify-center gap-4 mb-6">
             <a
               href={INSTAGRAM_URL}
@@ -1134,7 +1491,6 @@ export default function App() {
               <SiYoutube size={18} />
             </a>
           </div>
-
           <div className="border-t border-saffron-700/40 pt-5 space-y-4">
             <p className="text-saffron-600 text-xs">
               © {new Date().getFullYear()}. Built with{" "}
@@ -1148,8 +1504,6 @@ export default function App() {
                 caffeine.ai
               </a>
             </p>
-
-            {/* Enhanced designer credit */}
             <div
               className="inline-block px-6 py-3 rounded-2xl"
               style={{
@@ -1181,6 +1535,297 @@ export default function App() {
         </div>
       </footer>
 
+      {/* ── MEMBERSHIP FORM MODAL ── */}
+      <AnimatePresence>
+        {memberFormOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.75)" }}
+            onClick={(e) =>
+              e.target === e.currentTarget &&
+              !memberSubmitting &&
+              setMemberFormOpen(false)
+            }
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
+              data-ocid="member.dialog"
+              className="relative w-full max-w-lg rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, #fff8e8, #fff3d0)",
+                border: "2px solid #E8A020",
+                boxShadow: "0 24px 80px rgba(0,0,0,0.5)",
+                maxHeight: "90vh",
+                overflowY: "auto",
+              }}
+            >
+              {/* Header */}
+              <div
+                className="flex items-center justify-between px-6 py-4"
+                style={{
+                  background: "linear-gradient(135deg, #E8520A, #C93D00)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="w-6 h-6 text-white" />
+                  <div>
+                    <h2 className="hindi-text text-white font-bold text-xl">
+                      सदस्यता फॉर्म
+                    </h2>
+                    <p className="hindi-text text-orange-100 text-xs">
+                      श्री राम नवमी सेवा समिति
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-ocid="member.close_button"
+                  onClick={() => setMemberFormOpen(false)}
+                  className="text-white hover:text-orange-200 transition-colors p-1"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="px-6 py-6">
+                <AnimatePresence mode="wait">
+                  {memberSubmitted ? (
+                    <motion.div
+                      key="member-success"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      data-ocid="member.success_state"
+                      className="text-center py-8"
+                    >
+                      <div className="text-6xl mb-4">🙏</div>
+                      <h3 className="hindi-text text-2xl font-bold text-saffron-800 mb-3">
+                        आवेदन सफलतापूर्वक सबमिट हो गया!
+                      </h3>
+                      <div className="bg-orange-50 border-2 border-orange-300 rounded-2xl px-6 py-5 mb-6">
+                        <p className="hindi-text text-orange-800 font-bold text-lg">
+                          हमारी टीम आप से जल्द ही संपर्क करेगी
+                        </p>
+                        <p className="hindi-text text-orange-600 text-sm mt-1">
+                          आपका आवेदन प्राप्त हो गया है। समिति द्वारा जल्द ही आपसे संपर्क
+                          किया जाएगा।
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMemberFormOpen(false)}
+                        className="hindi-text px-8 py-3 rounded-xl font-bold text-white"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #E8520A, #C93D00)",
+                        }}
+                      >
+                        ठीक है
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.form
+                      key="member-form"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onSubmit={handleMemberFormSubmit}
+                      className="space-y-4"
+                    >
+                      <p className="hindi-text text-saffron-700 text-sm text-center mb-4">
+                        सदस्यता के लिए नीचे अपना विवरण भरें
+                      </p>
+
+                      {/* Name */}
+                      <div>
+                        <label
+                          htmlFor="member-name"
+                          className="hindi-text text-saffron-800 font-semibold text-sm block mb-1"
+                        >
+                          नाम <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="member-name"
+                          type="text"
+                          required
+                          value={memberName}
+                          onChange={(e) => setMemberName(e.target.value)}
+                          placeholder="पूरा नाम"
+                          data-ocid="member.input"
+                          className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base"
+                        />
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label
+                          htmlFor="member-phone"
+                          className="hindi-text text-saffron-800 font-semibold text-sm block mb-1"
+                        >
+                          मोबाइल नंबर <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="member-phone"
+                          type="tel"
+                          required
+                          value={memberPhone}
+                          onChange={(e) => setMemberPhone(e.target.value)}
+                          placeholder="10 अंकों का मोबाइल नंबर"
+                          data-ocid="member.input"
+                          className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base"
+                        />
+                      </div>
+
+                      {/* Address */}
+                      <div>
+                        <label
+                          htmlFor="member-address"
+                          className="hindi-text text-saffron-800 font-semibold text-sm block mb-1"
+                        >
+                          पता <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          id="member-address"
+                          rows={2}
+                          required
+                          value={memberAddress}
+                          onChange={(e) => setMemberAddress(e.target.value)}
+                          placeholder="पूरा पता लिखें"
+                          data-ocid="member.textarea"
+                          className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base resize-none"
+                        />
+                      </div>
+
+                      {/* Occupation / Role */}
+                      <div>
+                        <label
+                          htmlFor="member-occupation"
+                          className="hindi-text text-saffron-800 font-semibold text-sm block mb-1"
+                        >
+                          दायित्व / व्यवसाय{" "}
+                          <span className="text-saffron-400 font-normal text-xs">
+                            (वैकल्पिक)
+                          </span>
+                        </label>
+                        <input
+                          id="member-occupation"
+                          type="text"
+                          value={memberOccupation}
+                          onChange={(e) => setMemberOccupation(e.target.value)}
+                          placeholder="जैसे: सदस्य, कोषाध्यक्ष, स्वयंसेवक"
+                          data-ocid="member.input"
+                          className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base"
+                        />
+                      </div>
+
+                      {/* Photo Upload */}
+                      <div>
+                        <label
+                          htmlFor="member-photo"
+                          className="hindi-text text-saffron-800 font-semibold text-sm block mb-1"
+                        >
+                          फोटो <span className="text-red-500">*</span>
+                        </label>
+                        <label
+                          htmlFor="member-photo"
+                          data-ocid="member.upload_button"
+                          className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-orange-300 rounded-xl cursor-pointer bg-white hover:bg-orange-50 transition-colors overflow-hidden"
+                        >
+                          {memberPhotoPreview ? (
+                            <img
+                              src={memberPhotoPreview}
+                              alt="Member preview"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 text-orange-400">
+                              <span className="text-4xl">🤳</span>
+                              <span className="hindi-text text-sm font-medium">
+                                अपनी फोटो अपलोड करें
+                              </span>
+                              <span className="text-xs text-orange-300">
+                                JPG, PNG
+                              </span>
+                            </div>
+                          )}
+                          <input
+                            id="member-photo"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] ?? null;
+                              setMemberPhotoFile(file);
+                              if (file) {
+                                compressImageToBase64(file, 150, 0.3)
+                                  .then(setMemberPhotoPreview)
+                                  .catch(() => setMemberPhotoPreview(null));
+                              } else {
+                                setMemberPhotoPreview(null);
+                              }
+                            }}
+                          />
+                        </label>
+                        {memberPhotoPreview && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMemberPhotoFile(null);
+                              setMemberPhotoPreview(null);
+                            }}
+                            className="hindi-text text-xs text-red-500 mt-1 hover:underline"
+                          >
+                            फोटो हटाएं
+                          </button>
+                        )}
+                      </div>
+
+                      {memberSubmitError && (
+                        <div
+                          data-ocid="member.error_state"
+                          className="hindi-text text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm"
+                        >
+                          {memberSubmitError}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={memberSubmitting}
+                        data-ocid="member.submit_button"
+                        className="hindi-text w-full py-4 rounded-xl font-bold text-lg text-white flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #E8520A, #C93D00)",
+                        }}
+                      >
+                        {memberSubmitting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>सबमिट हो रहा है...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Users className="w-5 h-5" />
+                            <span>सदस्यता आवेदन करें</span>
+                          </>
+                        )}
+                      </button>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── ADMIN MODAL ── */}
       <AnimatePresence>
         {adminOpen && (
@@ -1198,7 +1843,7 @@ export default function App() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
               data-ocid="admin.dialog"
-              className="relative w-full max-w-2xl rounded-2xl overflow-hidden"
+              className="relative w-full max-w-3xl rounded-2xl overflow-hidden"
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.96 0.03 82), oklch(0.98 0.02 87))",
@@ -1207,61 +1852,57 @@ export default function App() {
                 maxHeight: "90vh",
               }}
             >
-              {/* Modal Header */}
+              {/* Header */}
               <div
                 className="flex items-center justify-between px-6 py-4"
                 style={{
                   background:
-                    "linear-gradient(135deg, oklch(0.45 0.16 46), oklch(0.38 0.14 42))",
-                  borderBottom: "1px solid oklch(0.62 0.18 50 / 0.4)",
+                    "linear-gradient(135deg, oklch(0.35 0.10 50), oklch(0.28 0.08 45))",
                 }}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Lock className="w-5 h-5 text-saffron-300" />
-                  <h3 className="hindi-text text-saffron-100 text-lg font-bold">
-                    Admin Panel — दान रिकॉर्ड
-                  </h3>
+                  <h2 className="hindi-text text-saffron-100 font-bold text-xl">
+                    Admin Panel
+                  </h2>
                 </div>
                 <button
                   type="button"
                   data-ocid="admin.close_button"
                   onClick={handleAdminClose}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-saffron-300 hover:text-saffron-100 hover:bg-white/10 transition-all"
+                  className="text-saffron-300 hover:text-white transition-colors p-1"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
               <div
-                className="p-6 overflow-y-auto"
-                style={{ maxHeight: "calc(90vh - 80px)" }}
+                className="overflow-y-auto"
+                style={{ maxHeight: "calc(90vh - 70px)" }}
               >
                 {!adminAuthenticated ? (
-                  // PIN Entry
-                  <div className="max-w-xs mx-auto text-center py-4">
-                    <div className="text-4xl mb-4">🔐</div>
-                    <p className="hindi-text text-saffron-700 mb-6 font-medium">
-                      PIN दर्ज करें
+                  <div className="px-6 py-8">
+                    <p className="hindi-text text-saffron-700 text-center mb-6">
+                      Admin PIN दर्ज करें
                     </p>
-                    <form onSubmit={handleAdminPinSubmit} className="space-y-4">
+                    <form
+                      onSubmit={handleAdminPinSubmit}
+                      className="max-w-xs mx-auto space-y-4"
+                    >
                       <input
                         type="password"
-                        maxLength={4}
                         value={adminPin}
-                        onChange={(e) => {
-                          setAdminPin(e.target.value);
-                          setAdminPinError(false);
-                        }}
-                        placeholder="• • • •"
+                        onChange={(e) => setAdminPin(e.target.value)}
+                        placeholder="PIN"
                         data-ocid="admin.input"
-                        className="w-full text-center text-2xl tracking-widest px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 text-center text-2xl tracking-widest focus:border-saffron-500 focus:outline-none"
                       />
                       {adminPinError && (
                         <p
                           data-ocid="admin.error_state"
-                          className="hindi-text text-red-600 text-sm"
+                          className="hindi-text text-red-600 text-sm text-center"
                         >
-                          ❌ गलत PIN। पुनः प्रयास करें।
+                          गलत PIN। पुनः प्रयास करें।
                         </p>
                       )}
                       <button
@@ -1271,111 +1912,344 @@ export default function App() {
                       >
                         प्रवेश करें
                       </button>
-                      <button
-                        type="button"
-                        data-ocid="admin.cancel_button"
-                        onClick={handleAdminClose}
-                        className="hindi-text w-full py-2 text-saffron-500 text-sm hover:text-saffron-700 transition-colors"
-                      >
-                        रद्द करें
-                      </button>
                     </form>
                   </div>
-                ) : loadingDonations ? (
-                  // Loading
-                  <div
-                    data-ocid="admin.loading_state"
-                    className="text-center py-10"
-                  >
-                    <Loader2 className="w-8 h-8 animate-spin text-saffron-500 mx-auto mb-3" />
-                    <p className="hindi-text text-saffron-600">
-                      डेटा लोड हो रहा है...
-                    </p>
-                  </div>
-                ) : donations.length === 0 ? (
-                  // Empty state
-                  <div
-                    data-ocid="admin.empty_state"
-                    className="text-center py-10"
-                  >
-                    <div className="text-4xl mb-3">📭</div>
-                    <p className="hindi-text text-saffron-600 font-medium">
-                      अभी कोई दान रिकॉर्ड नहीं है।
-                    </p>
-                  </div>
                 ) : (
-                  // Donations list
-                  <div>
-                    <p className="hindi-text text-saffron-600 text-sm mb-4">
-                      कुल रिकॉर्ड:{" "}
-                      <strong className="text-saffron-800">
-                        {donations.length}
-                      </strong>
-                    </p>
-                    <div className="space-y-3">
-                      {donations.map((d, i) => (
-                        <motion.div
-                          key={d.name + d.phone + String(d.timestamp)}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          data-ocid={`admin.item.${i + 1}`}
-                          className="rounded-xl p-4"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, oklch(0.94 0.04 78), oklch(0.97 0.02 85))",
-                            border: "1px solid oklch(0.82 0.10 60)",
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                                style={{
-                                  background:
-                                    "linear-gradient(135deg, oklch(0.62 0.18 50), oklch(0.52 0.20 44))",
-                                }}
-                              >
-                                {i + 1}
-                              </div>
-                              <div>
-                                <p className="hindi-text text-saffron-900 font-bold">
-                                  {d.name}
-                                </p>
-                                <p className="text-saffron-600 text-xs">
-                                  {d.phone}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-saffron-800 font-bold text-lg">
-                                ₹{d.amount}
-                              </p>
-                              <p className="text-saffron-400 text-xs">
-                                {formatTimestamp(d.timestamp)}
-                              </p>
-                            </div>
-                          </div>
-                          {d.note && (
-                            <p className="hindi-text text-saffron-600 text-sm mt-2 pl-11 italic">
-                              "{d.note}"
-                            </p>
-                          )}
-                          {donationScreenshots[i] && (
-                            <div className="mt-3 pl-11">
-                              <p className="hindi-text text-saffron-600 text-xs mb-1 font-semibold">
-                                📷 भुगतान स्क्रीनशॉट:
-                              </p>
-                              <img
-                                src={donationScreenshots[i]!}
-                                alt="Payment screenshot"
-                                className="max-h-48 rounded-lg border border-saffron-300 object-contain"
-                              />
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
+                  <div className="px-4 py-4">
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-4 border-b border-saffron-200 pb-2">
+                      <button
+                        type="button"
+                        data-ocid="admin.donations.tab"
+                        onClick={() => setAdminTab("donations")}
+                        className={`hindi-text font-bold px-4 py-2 rounded-t-xl text-sm transition-all ${
+                          adminTab === "donations"
+                            ? "bg-saffron-600 text-white"
+                            : "text-saffron-600 hover:bg-saffron-100"
+                        }`}
+                      >
+                        दान इतिहास ({donations.length})
+                      </button>
+                      <button
+                        type="button"
+                        data-ocid="admin.members.tab"
+                        onClick={() => setAdminTab("members")}
+                        className={`hindi-text font-bold px-4 py-2 rounded-t-xl text-sm transition-all ${
+                          adminTab === "members"
+                            ? "bg-orange-600 text-white"
+                            : "text-orange-600 hover:bg-orange-50"
+                        }`}
+                      >
+                        <span className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          सदस्यता आवेदन ({memberApplications.length})
+                        </span>
+                      </button>
                     </div>
+
+                    {/* DONATIONS TAB */}
+                    {adminTab === "donations" && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="hindi-text text-saffron-700 font-semibold">
+                            कुल दान: {donations.length}
+                          </p>
+                          <button
+                            type="button"
+                            data-ocid="admin.clear_history.button"
+                            disabled={clearingHistory || donations.length === 0}
+                            onClick={async () => {
+                              if (
+                                !window.confirm(
+                                  "क्या आप सभी दान इतिहास हटाना चाहते हैं?",
+                                )
+                              )
+                                return;
+                              setClearingHistory(true);
+                              try {
+                                if (actor) {
+                                  await actor.clearAllDonations();
+                                  setDonations([]);
+                                }
+                              } catch {
+                                /* ignore */
+                              } finally {
+                                setClearingHistory(false);
+                              }
+                            }}
+                            className="hindi-text text-xs bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                          >
+                            {clearingHistory ? "हटाया जा रहा है..." : "सभी हटाएं"}
+                          </button>
+                        </div>
+                        {loadingDonations ? (
+                          <div
+                            data-ocid="admin.donations.loading_state"
+                            className="flex items-center justify-center py-10 gap-2 text-saffron-600"
+                          >
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span className="hindi-text">लोड हो रहा है...</span>
+                          </div>
+                        ) : donations.length === 0 ? (
+                          <div
+                            data-ocid="admin.donations.empty_state"
+                            className="text-center py-10"
+                          >
+                            <p className="text-4xl mb-2">📭</p>
+                            <p className="hindi-text text-saffron-500">
+                              अभी कोई दान विवरण नहीं है।
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {donations.map((d, idx) => (
+                              <div
+                                key={`d-${d.name}-${String(d.timestamp)}`}
+                                data-ocid="admin.donations.item.1"
+                                className="bg-white rounded-xl p-4 border border-saffron-200 shadow-sm"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="bg-saffron-100 text-saffron-700 font-bold text-xs px-2 py-0.5 rounded-full">
+                                        #{idx + 1}
+                                      </span>
+                                      <p className="hindi-text font-bold text-saffron-800 text-base">
+                                        {d.name}
+                                      </p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                      <p className="hindi-text text-saffron-600">
+                                        <span className="font-semibold">
+                                          मोबाइल:
+                                        </span>{" "}
+                                        {d.phone}
+                                      </p>
+                                      <p className="hindi-text text-saffron-600">
+                                        <span className="font-semibold">
+                                          राशि:
+                                        </span>{" "}
+                                        ₹{d.amount}
+                                      </p>
+                                      {d.note && (
+                                        <p className="hindi-text text-saffron-500 col-span-2">
+                                          <span className="font-semibold">
+                                            संदेश:
+                                          </span>{" "}
+                                          {d.note}
+                                        </p>
+                                      )}
+                                      <p className="hindi-text text-saffron-400 text-xs col-span-2">
+                                        {formatTimestamp(d.timestamp)}
+                                      </p>
+                                    </div>
+                                    {d.screenshot && (
+                                      <div className="mt-2">
+                                        <p className="hindi-text text-saffron-600 text-xs font-semibold mb-1">
+                                          भुगतान स्क्रीनशॉट:
+                                        </p>
+                                        <img
+                                          src={d.screenshot}
+                                          alt="Payment screenshot"
+                                          className="max-h-32 rounded-lg border border-saffron-200 object-contain"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    data-ocid={`admin.donations.delete_button.${idx + 1}`}
+                                    onClick={() => handleDeleteDonation(idx)}
+                                    className="text-red-400 hover:text-red-600 transition-colors p-1 flex-shrink-0"
+                                    title="हटाएं"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* MEMBERS TAB */}
+                    {adminTab === "members" && (
+                      <div>
+                        <p className="hindi-text text-saffron-700 font-semibold mb-4">
+                          कुल आवेदन: {memberApplications.length}
+                        </p>
+                        {loadingMembers ? (
+                          <div
+                            data-ocid="admin.members.loading_state"
+                            className="flex items-center justify-center py-10 gap-2 text-saffron-600"
+                          >
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span className="hindi-text">लोड हो रहा है...</span>
+                          </div>
+                        ) : memberApplications.length === 0 ? (
+                          <div
+                            data-ocid="admin.members.empty_state"
+                            className="text-center py-10"
+                          >
+                            <p className="text-4xl mb-2">👥</p>
+                            <p className="hindi-text text-saffron-500">
+                              अभी कोई सदस्यता आवेदन नहीं है।
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {memberApplications.map((m, idx) => (
+                              <div
+                                key={String(m.id)}
+                                data-ocid={`admin.members.item.${idx + 1}`}
+                                className="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden"
+                              >
+                                <div className="p-4">
+                                  <div className="flex items-start gap-3">
+                                    {/* Photo */}
+                                    <div
+                                      className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-orange-200"
+                                      style={{ background: "#f9f0e0" }}
+                                    >
+                                      {m.photo ? (
+                                        <img
+                                          src={m.photo}
+                                          alt=""
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-orange-300 text-2xl">
+                                          👤
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <span className="bg-orange-100 text-orange-700 font-bold text-xs px-2 py-0.5 rounded-full">
+                                            #{idx + 1}
+                                          </span>
+                                          <p className="hindi-text font-bold text-saffron-800 text-base">
+                                            {m.name}
+                                          </p>
+                                        </div>
+                                        <span
+                                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                            m.status === "approved"
+                                              ? "bg-green-100 text-green-700"
+                                              : "bg-yellow-100 text-yellow-700"
+                                          }`}
+                                        >
+                                          {m.status === "approved"
+                                            ? "✅ स्वीकृत"
+                                            : "⏳ लंबित"}
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-1 gap-y-1 mt-2 text-sm">
+                                        <p className="hindi-text text-saffron-600">
+                                          <span className="font-semibold">
+                                            मोबाइल:
+                                          </span>{" "}
+                                          {m.phone}
+                                        </p>
+                                        <p className="hindi-text text-saffron-600">
+                                          <span className="font-semibold">
+                                            पता:
+                                          </span>{" "}
+                                          {m.address}
+                                        </p>
+                                        {m.occupation && (
+                                          <p className="hindi-text text-saffron-600">
+                                            <span className="font-semibold">
+                                              दायित्व:
+                                            </span>{" "}
+                                            {m.occupation}
+                                          </p>
+                                        )}
+                                        <p className="hindi-text text-saffron-400 text-xs">
+                                          {formatTimestamp(m.timestamp)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Action buttons */}
+                                  <div className="flex gap-2 mt-3">
+                                    {m.status !== "approved" && (
+                                      <button
+                                        type="button"
+                                        data-ocid={`admin.members.confirm_button.${idx + 1}`}
+                                        onClick={() =>
+                                          handleApproveMember(m.id)
+                                        }
+                                        className="hindi-text flex-1 py-2 rounded-lg font-bold text-sm text-white"
+                                        style={{
+                                          background:
+                                            "linear-gradient(135deg, #16a34a, #15803d)",
+                                        }}
+                                      >
+                                        ✅ स्वीकृत करें
+                                      </button>
+                                    )}
+                                    {m.status === "approved" && (
+                                      <button
+                                        type="button"
+                                        data-ocid={`admin.members.id_card_toggle.${idx + 1}`}
+                                        onClick={() =>
+                                          setExpandedMemberCard(
+                                            expandedMemberCard === idx
+                                              ? null
+                                              : idx,
+                                          )
+                                        }
+                                        className="hindi-text flex-1 py-2 rounded-lg font-bold text-sm text-white flex items-center justify-center gap-1.5"
+                                        style={{
+                                          background:
+                                            "linear-gradient(135deg, #E8520A, #C93D00)",
+                                        }}
+                                      >
+                                        <Download className="w-4 h-4" />
+                                        {expandedMemberCard === idx
+                                          ? "ID Card छुपाएं"
+                                          : "ID Card देखें / डाउनलोड"}
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      data-ocid={`admin.members.delete_button.${idx + 1}`}
+                                      onClick={() => handleDeleteMember(m.id)}
+                                      className="px-3 py-2 rounded-lg text-sm font-bold text-white"
+                                      style={{ background: "#dc2626" }}
+                                    >
+                                      🗑
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* ID Card (expanded when approved) */}
+                                <AnimatePresence>
+                                  {m.status === "approved" &&
+                                    expandedMemberCard === idx && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t border-orange-200 px-4 py-5 bg-orange-50"
+                                      >
+                                        <p className="hindi-text text-saffron-700 font-bold text-sm text-center mb-3">
+                                          ID Card Preview
+                                        </p>
+                                        <IDCardPreview member={m} />
+                                      </motion.div>
+                                    )}
+                                </AnimatePresence>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

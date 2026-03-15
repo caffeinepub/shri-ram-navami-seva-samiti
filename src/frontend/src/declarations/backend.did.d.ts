@@ -16,11 +16,13 @@ export interface Donation {
   'timestamp' : Time,
   'phone' : string,
   'amount' : string,
+  'screenshot' : string,
 }
 export type Time = bigint;
 export interface _SERVICE {
   'getAllDonations' : ActorMethod<[], Array<Donation>>,
-  'submitDonation' : ActorMethod<[string, string, string, string], undefined>,
+  'submitDonation' : ActorMethod<[string, string, string, string, string], undefined>,
+  'clearAllDonations' : ActorMethod<[], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
