@@ -18,11 +18,26 @@ export interface Donation {
   'amount' : string,
   'screenshot' : string,
 }
+export interface MemberApplication {
+  'id' : bigint,
+  'name' : string,
+  'phone' : string,
+  'address' : string,
+  'occupation' : string,
+  'photo' : string,
+  'status' : string,
+  'timestamp' : Time,
+}
 export type Time = bigint;
 export interface _SERVICE {
   'getAllDonations' : ActorMethod<[], Array<Donation>>,
   'submitDonation' : ActorMethod<[string, string, string, string, string], undefined>,
   'clearAllDonations' : ActorMethod<[], undefined>,
+  'deleteDonationById' : ActorMethod<[bigint], undefined>,
+  'submitMemberApplication' : ActorMethod<[string, string, string, string, string], bigint>,
+  'getAllMemberApplications' : ActorMethod<[], Array<MemberApplication>>,
+  'approveMemberApplication' : ActorMethod<[bigint], undefined>,
+  'deleteMemberApplication' : ActorMethod<[bigint], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

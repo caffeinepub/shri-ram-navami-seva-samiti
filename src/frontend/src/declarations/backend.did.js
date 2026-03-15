@@ -18,10 +18,26 @@ export const Donation = IDL.Record({
   'screenshot' : IDL.Text,
 });
 
+export const MemberApplication = IDL.Record({
+  'id' : IDL.Nat,
+  'name' : IDL.Text,
+  'phone' : IDL.Text,
+  'address' : IDL.Text,
+  'occupation' : IDL.Text,
+  'photo' : IDL.Text,
+  'status' : IDL.Text,
+  'timestamp' : Time,
+});
+
 export const idlService = IDL.Service({
   'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
   'submitDonation' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
   'clearAllDonations' : IDL.Func([], [], []),
+  'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
+  'submitMemberApplication' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text], [IDL.Nat], []),
+  'getAllMemberApplications' : IDL.Func([], [IDL.Vec(MemberApplication)], ['query']),
+  'approveMemberApplication' : IDL.Func([IDL.Nat], [], []),
+  'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
 });
 
 export const idlInitArgs = [];
@@ -36,7 +52,16 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Text,
     'screenshot' : IDL.Text,
   });
-  
+  const MemberApplication = IDL.Record({
+    'id' : IDL.Nat,
+    'name' : IDL.Text,
+    'phone' : IDL.Text,
+    'address' : IDL.Text,
+    'occupation' : IDL.Text,
+    'photo' : IDL.Text,
+    'status' : IDL.Text,
+    'timestamp' : Time,
+  });
   return IDL.Service({
     'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
     'submitDonation' : IDL.Func(
@@ -45,6 +70,15 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'clearAllDonations' : IDL.Func([], [], []),
+    'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
+    'submitMemberApplication' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Nat],
+        [],
+      ),
+    'getAllMemberApplications' : IDL.Func([], [IDL.Vec(MemberApplication)], ['query']),
+    'approveMemberApplication' : IDL.Func([IDL.Nat], [], []),
+    'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
   });
 };
 
