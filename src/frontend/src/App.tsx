@@ -81,6 +81,7 @@ const NAV_ITEMS = [
   { label: "हमारे बारे में", id: "about", ocid: "nav.link.2" },
   { label: "कार्यक्रम", id: "events", ocid: "nav.link.3" },
   { label: "दान करें", id: "donation", ocid: "nav.link.4" },
+  { label: "🪪 ID Card", id: "idcard", ocid: "nav.link.5" },
 ];
 
 interface Donation {
@@ -158,8 +159,8 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:#f5f5f5;display:fl
     <div class="header-row">
       <img class="logo" src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.visibility='hidden'" />
       <div class="org-info">
-        <div class="org-name">श्री राम जन्मोत्सव सेवा समिति</div>
-        <div class="org-sub">उशरी, हसनपुरा — रामनवामी सेवा समिति</div>
+        <div class="org-name">श्री राम नवामी सेवा समिति</div>
+        <div class="org-sub">उसरी, हसनपुरा — रामनवामी सेवा समिति</div>
       </div>
       <img class="logo" src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.visibility='hidden'" />
     </div>
@@ -245,10 +246,10 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:#f5f5f5;display:fl
                 className="font-black text-sm leading-tight"
                 style={{ color: "#7B0000" }}
               >
-                श्री राम जन्मोत्सव सेवा समिति
+                श्री राम नवामी सेवा समिति
               </p>
               <p className="text-xs font-semibold" style={{ color: "#5c3d00" }}>
-                उशरी, हसनपुरा
+                उसरी, हसनपुरा
               </p>
             </div>
             <img
@@ -1872,6 +1873,24 @@ export default function App() {
             >
               <SiYoutube size={18} />
             </a>
+          </div>
+          <div className="mb-6 space-y-2">
+            <p className="hindi-text text-saffron-300 font-semibold text-sm">
+              📞 संपर्क करें
+            </p>
+            <p className="text-saffron-400 text-sm">
+              <a
+                href="mailto:ramnavami841236@gmail.com"
+                className="hover:text-saffron-200 underline"
+              >
+                ramnavami841236@gmail.com
+              </a>
+            </p>
+            <p className="text-saffron-400 text-sm">
+              <a href="tel:9889729940" className="hover:text-saffron-200">
+                📱 9889729940
+              </a>
+            </p>
           </div>
           <div className="border-t border-saffron-700/40 pt-5 space-y-4">
             <p className="text-saffron-600 text-xs">
