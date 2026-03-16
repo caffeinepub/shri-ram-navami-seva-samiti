@@ -7,7 +7,7 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface Donation {
+export interface DonationWithScreenshot {
     name: string;
     note: string;
     timestamp: Time;
@@ -15,24 +15,27 @@ export interface Donation {
     amount: string;
     screenshot: string;
 }
+export type Time = bigint;
 export interface MemberApplication {
     id: bigint;
-    name: string;
-    phone: string;
-    address: string;
     occupation: string;
-    photo: string;
     status: string;
+    name: string;
+    address: string;
     timestamp: Time;
+    paymentDone: boolean;
+    phone: string;
+    photo: string;
 }
-export type Time = bigint;
 export interface backendInterface {
-    getAllDonations(): Promise<Array<Donation>>;
-    submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
-    clearAllDonations(): Promise<void>;
-    deleteDonationById(id: bigint): Promise<void>;
-    submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
-    getAllMemberApplications(): Promise<Array<MemberApplication>>;
     approveMemberApplication(id: bigint): Promise<void>;
+    clearAllDonations(): Promise<void>;
+    confirmMemberPayment(id: bigint): Promise<boolean>;
+    deleteDonationById(id: bigint): Promise<void>;
     deleteMemberApplication(id: bigint): Promise<void>;
+    getAllDonations(): Promise<Array<DonationWithScreenshot>>;
+    getAllMemberApplications(): Promise<Array<MemberApplication>>;
+    getMemberByPhoneAndName(phone: string, name: string): Promise<MemberApplication | null>;
+    submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
+    submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
 }

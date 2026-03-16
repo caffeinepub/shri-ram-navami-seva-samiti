@@ -10,7 +10,7 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface Donation {
+export interface DonationWithScreenshot {
   'name' : string,
   'note' : string,
   'timestamp' : Time,
@@ -20,24 +20,36 @@ export interface Donation {
 }
 export interface MemberApplication {
   'id' : bigint,
-  'name' : string,
-  'phone' : string,
-  'address' : string,
   'occupation' : string,
-  'photo' : string,
   'status' : string,
+  'name' : string,
+  'address' : string,
   'timestamp' : Time,
+  'paymentDone' : boolean,
+  'phone' : string,
+  'photo' : string,
 }
 export type Time = bigint;
 export interface _SERVICE {
-  'getAllDonations' : ActorMethod<[], Array<Donation>>,
-  'submitDonation' : ActorMethod<[string, string, string, string, string], undefined>,
-  'clearAllDonations' : ActorMethod<[], undefined>,
-  'deleteDonationById' : ActorMethod<[bigint], undefined>,
-  'submitMemberApplication' : ActorMethod<[string, string, string, string, string], bigint>,
-  'getAllMemberApplications' : ActorMethod<[], Array<MemberApplication>>,
   'approveMemberApplication' : ActorMethod<[bigint], undefined>,
+  'clearAllDonations' : ActorMethod<[], undefined>,
+  'confirmMemberPayment' : ActorMethod<[bigint], boolean>,
+  'deleteDonationById' : ActorMethod<[bigint], undefined>,
   'deleteMemberApplication' : ActorMethod<[bigint], undefined>,
+  'getAllDonations' : ActorMethod<[], Array<DonationWithScreenshot>>,
+  'getAllMemberApplications' : ActorMethod<[], Array<MemberApplication>>,
+  'getMemberByPhoneAndName' : ActorMethod<
+    [string, string],
+    [] | [MemberApplication]
+  >,
+  'submitDonation' : ActorMethod<
+    [string, string, string, string, string],
+    undefined
+  >,
+  'submitMemberApplication' : ActorMethod<
+    [string, string, string, string, string],
+    bigint
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

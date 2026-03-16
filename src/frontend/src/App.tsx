@@ -100,6 +100,7 @@ interface MemberApplication {
   occupation: string;
   photo: string;
   status: string;
+  paymentDone: boolean;
   timestamp: bigint;
 }
 
@@ -116,183 +117,263 @@ function IDCardPreview({ member }: { member: MemberApplication }) {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const downloadIDCard = async () => {
-    // Use html2canvas-like approach via browser print
-    const card = cardRef.current;
-    if (!card) return;
-
-    // Create a printable version
-    const printWin = window.open("", "_blank", "width=800,height=500");
+    const printWin = window.open("", "_blank", "width=900,height=600");
     if (!printWin) return;
-    printWin.document.write(`
-      <!DOCTYPE html><html><head><meta charset="UTF-8">
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&display=swap');
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Noto Sans Devanagari', sans-serif; background:#fff; display:flex; justify-content:center; padding:20px; }
-        .card { width:380px; background:#E8520A; border-radius:12px; padding:14px; color:white; border:3px solid #8B1A00; }
-        .top-badge { text-align:center; color:#FFE600; font-weight:900; font-size:13px; margin-bottom:4px; }
-        .header-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-        .header-row img { width:52px; height:60px; object-fit:cover; border-radius:4px; }
-        .org-title { flex:1; text-align:center; }
-        .org-name { color:#1A0080; font-weight:900; font-size:17px; line-height:1.2; text-shadow:1px 1px 0 #fff; }
-        .org-loc { color:white; font-size:13px; font-weight:600; }
-        .content-row { display:flex; gap:10px; margin-top:8px; }
-        .fields { flex:1; }
-        .field-row { display:flex; align-items:flex-start; margin-bottom:10px; }
-        .field-label { color:white; font-weight:700; font-size:14px; min-width:70px; }
-        .field-dots { flex:1; border-bottom:2px dotted white; margin:0 6px; margin-bottom:3px; }
-        .field-value { font-size:13px; color:#FFE600; font-weight:600; }
-        .photo-box { width:80px; height:90px; background:white; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
-        .photo-box img { width:100%; height:100%; object-fit:cover; }
-        .footer { text-align:right; color:#FFE600; font-size:12px; font-weight:700; margin-top:8px; }
-      </style></head><body>
-      <div class="card">
-        <div class="top-badge">!! जय श्री राम !!</div>
-        <div class="header-row">
-          <img src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.display='none'" />
-          <div class="org-title">
-            <div class="org-name">श्री राम जन्मोत्सव सेवा समिति</div>
-            <div class="org-loc">उशरी, हसनपुरा</div>
-          </div>
-          <img src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.display='none'" />
-        </div>
-        <div class="content-row">
-          <div class="fields">
-            <div class="field-row">
-              <span class="field-label">नाम</span>
-              <span style="margin:0 6px;">:</span>
-              <span class="field-dots"></span>
-            </div>
-            <div style="margin-left:76px;margin-top:-8px;margin-bottom:8px;"><span class="field-value">${member.name}</span></div>
-            <div class="field-row">
-              <span class="field-label">दायित्व</span>
-              <span style="margin:0 6px;">:</span>
-              <span class="field-dots"></span>
-            </div>
-            <div style="margin-left:76px;margin-top:-8px;margin-bottom:8px;"><span class="field-value">${member.occupation || "सदस्य"}</span></div>
-            <div class="field-row">
-              <span class="field-label">मो.</span>
-              <span style="margin:0 6px;">:</span>
-              <span class="field-dots"></span>
-            </div>
-            <div style="margin-left:76px;margin-top:-8px;"><span class="field-value">${member.phone}</span></div>
-          </div>
-          <div class="photo-box">
-            ${member.photo ? `<img src="${member.photo}" />` : "<span style='color:#999;font-size:11px;text-align:center'>फोटो</span>"}
-          </div>
-        </div>
-        <div class="footer">पदाधिकारी हस्ताक्षर</div>
+    const photoHtml = member.photo
+      ? `<img src="${member.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" />`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#b45309;font-size:11px;font-family:'Noto Sans Devanagari',sans-serif;">फोटो</div>`;
+    printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans Devanagari',sans-serif;background:#f5f5f5;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:30px;}
+@media print{body{background:white;padding:0;}@page{margin:0;}}
+.card{width:420px;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.25);border:3px solid #b45309;}
+.card-top{background:linear-gradient(135deg,#FF8C00,#FFD700,#FF8C00);padding:10px 14px 8px;text-align:center;border-bottom:2px solid #b45309;}
+.jay{color:#7B0000;font-weight:900;font-size:15px;letter-spacing:1px;text-shadow:0 1px 0 rgba(255,255,255,0.5);}
+.header-row{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.logo{width:48px;height:48px;object-fit:contain;border-radius:50%;border:2px solid #b45309;background:white;padding:2px;}
+.org-info{flex:1;}
+.org-name{color:#7B0000;font-weight:900;font-size:16px;line-height:1.3;text-shadow:0 1px 0 rgba(255,255,255,0.6);}
+.org-sub{color:#5c3d00;font-size:11px;font-weight:600;margin-top:2px;}
+.id-label{background:#7B0000;color:#FFD700;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;margin-top:6px;display:inline-block;letter-spacing:1px;}
+.card-body{background:linear-gradient(180deg,#FFF8E1 0%,#FFFDE7 60%,#FFF3CD 100%);padding:14px 16px;}
+.content-row{display:flex;gap:14px;align-items:flex-start;}
+.fields{flex:1;}
+.field-block{margin-bottom:10px;}
+.field-label{color:#7B0000;font-weight:700;font-size:13px;}
+.field-line{border-bottom:1.5px dotted #b45309;margin:3px 0 2px;}
+.field-value{color:#1a1a1a;font-size:13px;font-weight:600;padding-left:2px;}
+.photo-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.photo-box{width:88px;height:100px;border:2px solid #b45309;border-radius:8px;overflow:hidden;background:#fff8e1;}
+.member-badge{background:#7B0000;color:#FFD700;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-align:center;}
+.card-footer{background:linear-gradient(135deg,#FF8C00,#FFD700,#FF8C00);padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-top:2px solid #b45309;}
+.footer-left{color:#7B0000;font-size:10px;font-weight:700;}
+.footer-right{color:#7B0000;font-size:10px;font-weight:700;text-align:right;}
+.sig-line{border-top:1.5px solid #7B0000;width:80px;margin-top:4px;}
+</style></head><body>
+<div class="card">
+  <div class="card-top">
+    <div class="jay">॥ जय श्री राम ॥</div>
+    <div class="header-row">
+      <img class="logo" src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.visibility='hidden'" />
+      <div class="org-info">
+        <div class="org-name">श्री राम जन्मोत्सव सेवा समिति</div>
+        <div class="org-sub">उशरी, हसनपुरा — रामनवामी सेवा समिति</div>
       </div>
-      </body></html>
-    `);
+      <img class="logo" src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.visibility='hidden'" />
+    </div>
+    <div><span class="id-label">सदस्यता पहचान पत्र</span></div>
+  </div>
+  <div class="card-body">
+    <div class="content-row">
+      <div class="fields">
+        <div class="field-block">
+          <div class="field-label">नाम</div>
+          <div class="field-line"></div>
+          <div class="field-value">${member.name}</div>
+        </div>
+        <div class="field-block">
+          <div class="field-label">दायित्व</div>
+          <div class="field-line"></div>
+          <div class="field-value">${member.occupation || "—"}</div>
+        </div>
+        <div class="field-block">
+          <div class="field-label">पता</div>
+          <div class="field-line"></div>
+          <div class="field-value">${member.address || "—"}</div>
+        </div>
+        <div class="field-block">
+          <div class="field-label">मो.</div>
+          <div class="field-line"></div>
+          <div class="field-value">${member.phone}</div>
+        </div>
+      </div>
+      <div class="photo-col">
+        <div class="photo-box">${photoHtml}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="footer-left">जारी दिनांक: ${new Date().toLocaleDateString("hi-IN")}</div>
+    <div class="footer-right">
+      <div class="sig-line"></div>
+      पदाधिकारी हस्ताक्षर
+    </div>
+  </div>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},800);}</script>
+</body></html>`);
     printWin.document.close();
-    setTimeout(() => {
-      printWin.print();
-    }, 500);
   };
 
   return (
     <div>
-      {/* ID Card Visual */}
+      {/* ID Card Visual - Saffron/Golden Professional Design */}
       <div
         ref={cardRef}
-        className="rounded-xl p-3 text-white mx-auto"
+        className="mx-auto rounded-2xl overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #E8520A, #C93D00)",
-          border: "3px solid #8B1A00",
-          maxWidth: 340,
+          maxWidth: 380,
+          border: "3px solid #b45309",
+          boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
           fontFamily: "'Noto Sans Devanagari', sans-serif",
         }}
       >
-        {/* Top badge */}
-        <p
-          className="text-center font-black text-sm mb-1"
-          style={{ color: "#FFE600" }}
+        {/* Top golden header */}
+        <div
+          className="px-3 pt-3 pb-2 text-center"
+          style={{
+            background: "linear-gradient(135deg,#FF8C00,#FFD700,#FF8C00)",
+            borderBottom: "2px solid #b45309",
+          }}
         >
-          !! जय श्री राम !!
-        </p>
-        {/* Header row */}
-        <div className="flex items-center gap-2 mb-2">
-          <img
-            src="/assets/uploads/234724-3.png"
-            alt=""
-            className="w-12 h-12 rounded object-cover"
-          />
-          <div className="flex-1 text-center">
-            <p
-              className="font-black text-base leading-tight"
-              style={{ color: "#1A0080", textShadow: "1px 1px 0 #fff" }}
-            >
-              श्री राम जन्मोत्सव सेवा समिति
-            </p>
-            <p className="text-white text-xs font-semibold">उशरी, हसनपुरा</p>
-          </div>
-          <img
-            src="/assets/uploads/234724-3.png"
-            alt=""
-            className="w-12 h-12 rounded object-cover"
-          />
-        </div>
-        {/* Content */}
-        <div className="flex gap-2">
-          <div className="flex-1 space-y-2">
-            {[
-              { label: "नाम", value: member.name },
-              { label: "दायित्व", value: member.occupation || "सदस्य" },
-              { label: "मो.", value: member.phone },
-            ].map((f) => (
-              <div key={f.label}>
-                <div className="flex items-center">
-                  <span className="text-white font-bold text-sm w-16">
-                    {f.label}
-                  </span>
-                  <span className="text-white mx-1">:</span>
-                  <span className="flex-1 border-b border-dotted border-white/60" />
-                </div>
-                <p
-                  className="text-xs font-semibold ml-16"
-                  style={{ color: "#FFE600" }}
-                >
-                  {f.value}
-                </p>
-              </div>
-            ))}
-          </div>
-          {/* Photo box */}
-          <div
-            className="flex-shrink-0 rounded flex items-center justify-center overflow-hidden"
-            style={{ width: 72, height: 84, background: "white" }}
+          <p
+            className="font-black text-sm tracking-wide"
+            style={{ color: "#7B0000" }}
           >
-            {member.photo ? (
-              <img
-                src={member.photo}
-                alt="फोटो"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-gray-400 text-xs text-center px-1">
-                फोटो
-              </span>
-            )}
+            ॥ जय श्री राम ॥
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <img
+              src="/assets/uploads/234724-3.png"
+              alt=""
+              className="w-10 h-10 rounded-full object-contain border-2 border-amber-800 bg-white p-0.5"
+            />
+            <div className="flex-1">
+              <p
+                className="font-black text-sm leading-tight"
+                style={{ color: "#7B0000" }}
+              >
+                श्री राम जन्मोत्सव सेवा समिति
+              </p>
+              <p className="text-xs font-semibold" style={{ color: "#5c3d00" }}>
+                उशरी, हसनपुरा
+              </p>
+            </div>
+            <img
+              src="/assets/uploads/234724-3.png"
+              alt=""
+              className="w-10 h-10 rounded-full object-contain border-2 border-amber-800 bg-white p-0.5"
+            />
+          </div>
+          <span
+            className="inline-block mt-1 text-xs font-bold px-3 py-0.5 rounded-full"
+            style={{
+              background: "#7B0000",
+              color: "#FFD700",
+              letterSpacing: "1px",
+            }}
+          >
+            सदस्यता पहचान पत्र
+          </span>
+        </div>
+
+        {/* Card body - cream/golden */}
+        <div
+          style={{
+            background:
+              "linear-gradient(180deg,#FFF8E1 0%,#FFFDE7 60%,#FFF3CD 100%)",
+            padding: "12px 14px",
+          }}
+        >
+          <div className="flex gap-3 items-start">
+            {/* Fields */}
+            <div className="flex-1 space-y-2">
+              {[
+                { label: "नाम", value: member.name },
+                { label: "दायित्व", value: member.occupation || "—" },
+                { label: "पता", value: member.address || "—" },
+                { label: "मो.", value: member.phone },
+              ].map((f) => (
+                <div key={f.label}>
+                  <p className="text-xs font-bold" style={{ color: "#7B0000" }}>
+                    {f.label}
+                  </p>
+                  <div
+                    style={{
+                      borderBottom: "1.5px dotted #b45309",
+                      margin: "2px 0",
+                    }}
+                  />
+                  <p
+                    className="text-xs font-semibold"
+                    style={{ color: "#1a1a1a" }}
+                  >
+                    {f.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {/* Photo */}
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div
+                className="flex items-center justify-center overflow-hidden rounded-lg"
+                style={{
+                  width: 80,
+                  height: 92,
+                  border: "2px solid #b45309",
+                  background: "#fff8e1",
+                }}
+              >
+                {member.photo ? (
+                  <img
+                    src={member.photo}
+                    alt="फोटो"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="text-xs text-center"
+                    style={{ color: "#b45309" }}
+                  >
+                    फोटो
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        <p
-          className="text-right text-xs font-bold mt-2"
-          style={{ color: "#FFE600" }}
+
+        {/* Footer */}
+        <div
+          className="flex justify-between items-center px-3 py-2"
+          style={{
+            background: "linear-gradient(135deg,#FF8C00,#FFD700,#FF8C00)",
+            borderTop: "2px solid #b45309",
+          }}
         >
-          पदाधिकारी हस्ताक्षर
-        </p>
+          <p className="text-xs font-bold" style={{ color: "#7B0000" }}>
+            दिनांक: {new Date().toLocaleDateString("hi-IN")}
+          </p>
+          <div className="text-right">
+            <div
+              style={{
+                borderTop: "1.5px solid #7B0000",
+                width: 72,
+                marginBottom: 2,
+              }}
+            />
+            <p className="text-xs font-bold" style={{ color: "#7B0000" }}>
+              पदाधिकारी हस्ताक्षर
+            </p>
+          </div>
+        </div>
       </div>
 
       <button
         type="button"
         onClick={downloadIDCard}
         data-ocid="admin.member.id_card.button"
-        className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl font-bold text-sm text-white"
-        style={{ background: "linear-gradient(135deg, #E8520A, #C93D00)" }}
+        className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl font-bold text-sm"
+        style={{
+          background: "linear-gradient(135deg,#FF8C00,#FFD700)",
+          color: "#7B0000",
+          border: "2px solid #b45309",
+        }}
       >
         <Download className="w-4 h-4" />
-        ID Card डाउनलोड करें (Print)
+        ID Card डाउनलोड करें (Image)
       </button>
     </div>
   );
@@ -354,6 +435,17 @@ export default function App() {
   const [memberSubmitting, setMemberSubmitting] = useState(false);
   const [memberSubmitError, setMemberSubmitError] = useState("");
   const [memberSubmitted, setMemberSubmitted] = useState(false);
+
+  // Member ID card lookup state
+  const [memberLookupName, setMemberLookupName] = useState("");
+  const [memberLookupPhone, setMemberLookupPhone] = useState("");
+  const [memberLookupResult, setMemberLookupResult] = useState<
+    MemberApplication | null | "not_found"
+  >(null);
+  const [memberLookupLoading, setMemberLookupLoading] = useState(false);
+  const [memberPaymentConfirming, setMemberPaymentConfirming] = useState(false);
+  const [memberPaymentDone, setMemberPaymentDone] = useState(false);
+  const [showMemberIDCard, setShowMemberIDCard] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -449,7 +541,7 @@ export default function App() {
       setMemberPhotoPreview(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setMemberSubmitError(`सबमिट में त्रुटि: ${msg.substring(0, 100)}`);
+      setMemberSubmitError(`सबमिट में त्रुटि: ${msg.substring(0, 400)}`);
     } finally {
       setMemberSubmitting(false);
     }
@@ -525,6 +617,54 @@ export default function App() {
     // We don't have per-record delete for donations in this version; only clear all
     // So we'll just remove from local state as a UX improvement
     setDonations((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleMemberLookup = async () => {
+    if (!memberLookupName.trim() || !memberLookupPhone.trim()) return;
+    setMemberLookupLoading(true);
+    setMemberLookupResult(null);
+    setShowMemberIDCard(false);
+    setMemberPaymentDone(false);
+    try {
+      if (!actor) throw new Error("Not ready");
+      const result = await (actor as any).getMemberByPhoneAndName(
+        memberLookupPhone.trim(),
+        memberLookupName.trim(),
+      );
+      if (result === null || result === undefined) {
+        setMemberLookupResult("not_found");
+      } else {
+        setMemberLookupResult(result as MemberApplication);
+        const r = result as MemberApplication;
+        if (r.paymentDone && r.status === "approved") {
+          setShowMemberIDCard(true);
+        }
+      }
+    } catch (_e) {
+      setMemberLookupResult("not_found");
+    } finally {
+      setMemberLookupLoading(false);
+    }
+  };
+
+  const handleConfirmMemberPayment = async () => {
+    if (!memberLookupResult || memberLookupResult === "not_found") return;
+    setMemberPaymentConfirming(true);
+    try {
+      if (!actor) throw new Error("Not ready");
+      const success = await (actor as any).confirmMemberPayment(
+        memberLookupResult.id,
+      );
+      if (success) {
+        setMemberPaymentDone(true);
+        setShowMemberIDCard(true);
+        setMemberLookupResult({ ...memberLookupResult, paymentDone: true });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setMemberPaymentConfirming(false);
+    }
   };
 
   return (
@@ -1368,6 +1508,248 @@ export default function App() {
           </div>
         </section>
 
+        {/* ── ID CARD LOOKUP SECTION ── */}
+        <section
+          id="idcard"
+          className="py-20 px-4"
+          style={{
+            background:
+              "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%)",
+          }}
+        >
+          <div className="max-w-2xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="text-center mb-10"
+            >
+              <div className="inline-flex items-center gap-2 bg-saffron-100 border border-saffron-300 rounded-full px-4 py-1.5 mb-4">
+                <span className="text-lg">🪪</span>
+                <span className="hindi-text text-saffron-700 text-sm font-semibold">
+                  सदस्यता ID Card
+                </span>
+              </div>
+              <h2 className="hindi-text text-3xl font-bold text-saffron-800 mb-2">
+                अपना ID Card देखें
+              </h2>
+              <p className="hindi-text text-saffron-600 mb-2">
+                सदस्यता आवेदन की स्थिति जांचें
+              </p>
+              <div className="mt-4 bg-saffron-50 border border-saffron-300 rounded-xl px-5 py-4 text-left">
+                <p className="hindi-text text-saffron-800 text-sm font-semibold mb-1">
+                  📌 सदस्यता के लिए:
+                </p>
+                <ol className="hindi-text text-saffron-700 text-sm space-y-1 list-decimal list-inside">
+                  <li>
+                    हमारी सदस्यता बनाने के लिए <strong>दान करें</strong>
+                  </li>
+                  <li>
+                    अपना योगदान payment करके{" "}
+                    <strong>screenshot submit करें</strong>
+                  </li>
+                  <li>
+                    आपकी payment जाँच करके <strong>Admin approval</strong> करेगा
+                  </li>
+                  <li>
+                    Approval के बाद आपका <strong>ID Card</strong> यहाँ मिलेगा
+                  </li>
+                </ol>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-saffron-200 p-6 md:p-8"
+            >
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label
+                    htmlFor="lookup-name"
+                    className="hindi-text text-sm font-semibold text-saffron-700 block mb-1.5"
+                  >
+                    आपका नाम
+                  </label>
+                  <input
+                    id="lookup-name"
+                    type="text"
+                    data-ocid="member_lookup.input"
+                    value={memberLookupName}
+                    onChange={(e) => setMemberLookupName(e.target.value)}
+                    placeholder="जैसा आवेदन में भरा था"
+                    className="hindi-text w-full px-4 py-3 rounded-xl border border-saffron-300 focus:outline-none focus:ring-2 focus:ring-saffron-400 bg-white text-saffron-800 placeholder-saffron-300"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="lookup-phone"
+                    className="hindi-text text-sm font-semibold text-saffron-700 block mb-1.5"
+                  >
+                    मोबाइल नंबर
+                  </label>
+                  <input
+                    id="lookup-phone"
+                    type="tel"
+                    data-ocid="member_lookup.search_input"
+                    value={memberLookupPhone}
+                    onChange={(e) => setMemberLookupPhone(e.target.value)}
+                    placeholder="10 अंकों का मोबाइल नंबर"
+                    className="hindi-text w-full px-4 py-3 rounded-xl border border-saffron-300 focus:outline-none focus:ring-2 focus:ring-saffron-400 bg-white text-saffron-800 placeholder-saffron-300"
+                    onKeyDown={(e) => e.key === "Enter" && handleMemberLookup()}
+                  />
+                </div>
+                <button
+                  type="button"
+                  data-ocid="member_lookup.submit_button"
+                  onClick={handleMemberLookup}
+                  disabled={
+                    memberLookupLoading ||
+                    !memberLookupName.trim() ||
+                    !memberLookupPhone.trim()
+                  }
+                  className="hindi-text w-full py-3 rounded-xl font-bold text-white text-base transition-all disabled:opacity-50"
+                  style={{
+                    background: "linear-gradient(135deg, #E8520A, #C93D00)",
+                  }}
+                >
+                  {memberLookupLoading ? "खोज रहे हैं..." : "🔍 स्थिति जांचें"}
+                </button>
+              </div>
+
+              {/* Results */}
+              {memberLookupLoading && (
+                <div
+                  data-ocid="member_lookup.loading_state"
+                  className="text-center py-6"
+                >
+                  <div className="inline-block w-8 h-8 border-4 border-saffron-300 border-t-saffron-600 rounded-full animate-spin mb-3" />
+                  <p className="hindi-text text-saffron-600">
+                    जानकारी खोजी जा रही है...
+                  </p>
+                </div>
+              )}
+
+              {!memberLookupLoading && memberLookupResult === "not_found" && (
+                <motion.div
+                  data-ocid="member_lookup.error_state"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-red-50 border border-red-200 rounded-xl p-4 text-center"
+                >
+                  <p className="text-2xl mb-2">😔</p>
+                  <p className="hindi-text text-red-700 font-semibold">
+                    कोई आवेदन नहीं मिला।
+                  </p>
+                  <p className="hindi-text text-red-500 text-sm mt-1">
+                    कृपया सही नाम और मोबाइल नंबर डालें।
+                  </p>
+                </motion.div>
+              )}
+
+              {!memberLookupLoading &&
+                memberLookupResult &&
+                memberLookupResult !== "not_found" &&
+                memberLookupResult.status === "pending" && (
+                  <motion.div
+                    data-ocid="member_lookup.pending_state"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 text-center"
+                  >
+                    <p className="text-3xl mb-2">⏳</p>
+                    <p className="hindi-text text-yellow-800 font-bold text-lg">
+                      आवेदन प्रक्रिया में है
+                    </p>
+                    <p className="hindi-text text-yellow-700 text-sm mt-2">
+                      Admin की स्वीकृति के बाद आप यहाँ भुगतान कर सकेंगे।
+                    </p>
+                    <div className="mt-3 bg-yellow-100 rounded-lg px-4 py-2">
+                      <p className="hindi-text text-yellow-600 text-xs">
+                        नाम:{" "}
+                        <span className="font-semibold">
+                          {memberLookupResult.name}
+                        </span>
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+              {!memberLookupLoading &&
+                memberLookupResult &&
+                memberLookupResult !== "not_found" &&
+                memberLookupResult.status === "approved" &&
+                !memberLookupResult.paymentDone &&
+                !memberPaymentDone && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                      <p className="text-2xl mb-1">✅</p>
+                      <p className="hindi-text text-green-800 font-bold">
+                        आपका आवेदन स्वीकृत हो गया है!
+                      </p>
+                      <p className="hindi-text text-green-600 text-sm mt-1">
+                        अब सदस्यता शुल्क का भुगतान करें।
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="hindi-text text-saffron-700 font-semibold mb-3">
+                        नीचे QR Code से भुगतान करें:
+                      </p>
+                      <img
+                        src="/assets/uploads/IMG_20260314_020614_556-1.jpg"
+                        alt="Payment QR Code"
+                        className="w-48 h-48 object-contain mx-auto rounded-xl border-2 border-saffron-300 shadow-md"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      data-ocid="member_lookup.confirm_button"
+                      onClick={handleConfirmMemberPayment}
+                      disabled={memberPaymentConfirming}
+                      className="hindi-text w-full py-3 rounded-xl font-bold text-white text-base transition-all disabled:opacity-50"
+                      style={{
+                        background: "linear-gradient(135deg, #16a34a, #15803d)",
+                      }}
+                    >
+                      {memberPaymentConfirming
+                        ? "पुष्टि हो रही है..."
+                        : "✅ मैंने भुगतान कर दिया है"}
+                    </button>
+                  </motion.div>
+                )}
+
+              {!memberLookupLoading &&
+                (showMemberIDCard ||
+                  (memberLookupResult &&
+                    memberLookupResult !== "not_found" &&
+                    memberLookupResult.paymentDone)) &&
+                memberLookupResult &&
+                memberLookupResult !== "not_found" && (
+                  <motion.div
+                    data-ocid="member_lookup.success_state"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                      <p className="hindi-text text-green-700 font-semibold">
+                        🎉 भुगतान की पुष्टि हो गई! आपका ID Card तैयार है।
+                      </p>
+                    </div>
+                    <IDCardPreview member={memberLookupResult} />
+                  </motion.div>
+                )}
+            </motion.div>
+          </div>
+        </section>
+
         {/* ── SOCIAL MEDIA SECTION ── */}
         <section id="social" className="section-deep py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
@@ -2144,6 +2526,17 @@ export default function App() {
                                           {m.status === "approved"
                                             ? "✅ स्वीकृत"
                                             : "⏳ लंबित"}
+                                        </span>
+                                        <span
+                                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                            m.paymentDone
+                                              ? "bg-emerald-100 text-emerald-700"
+                                              : "bg-gray-100 text-gray-500"
+                                          }`}
+                                        >
+                                          {m.paymentDone
+                                            ? "💰 भुगतान हुआ"
+                                            : "भुगतान बाकी"}
                                         </span>
                                       </div>
                                       <div className="grid grid-cols-1 gap-y-1 mt-2 text-sm">

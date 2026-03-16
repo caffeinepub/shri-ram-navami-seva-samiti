@@ -9,7 +9,7 @@
 import { IDL } from '@icp-sdk/core/candid';
 
 export const Time = IDL.Int;
-export const Donation = IDL.Record({
+export const DonationWithScreenshot = IDL.Record({
   'name' : IDL.Text,
   'note' : IDL.Text,
   'timestamp' : Time,
@@ -17,34 +17,56 @@ export const Donation = IDL.Record({
   'amount' : IDL.Text,
   'screenshot' : IDL.Text,
 });
-
 export const MemberApplication = IDL.Record({
   'id' : IDL.Nat,
-  'name' : IDL.Text,
-  'phone' : IDL.Text,
-  'address' : IDL.Text,
   'occupation' : IDL.Text,
-  'photo' : IDL.Text,
   'status' : IDL.Text,
+  'name' : IDL.Text,
+  'address' : IDL.Text,
   'timestamp' : Time,
+  'paymentDone' : IDL.Bool,
+  'phone' : IDL.Text,
+  'photo' : IDL.Text,
 });
 
 export const idlService = IDL.Service({
-  'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
-  'submitDonation' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
-  'clearAllDonations' : IDL.Func([], [], []),
-  'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
-  'submitMemberApplication' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text], [IDL.Nat], []),
-  'getAllMemberApplications' : IDL.Func([], [IDL.Vec(MemberApplication)], ['query']),
   'approveMemberApplication' : IDL.Func([IDL.Nat], [], []),
+  'clearAllDonations' : IDL.Func([], [], []),
+  'confirmMemberPayment' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+  'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
   'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
+  'getAllDonations' : IDL.Func(
+      [],
+      [IDL.Vec(DonationWithScreenshot)],
+      ['query'],
+    ),
+  'getAllMemberApplications' : IDL.Func(
+      [],
+      [IDL.Vec(MemberApplication)],
+      ['query'],
+    ),
+  'getMemberByPhoneAndName' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Opt(MemberApplication)],
+      ['query'],
+    ),
+  'submitDonation' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+      [],
+      [],
+    ),
+  'submitMemberApplication' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Nat],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
   const Time = IDL.Int;
-  const Donation = IDL.Record({
+  const DonationWithScreenshot = IDL.Record({
     'name' : IDL.Text,
     'note' : IDL.Text,
     'timestamp' : Time,
@@ -54,31 +76,47 @@ export const idlFactory = ({ IDL }) => {
   });
   const MemberApplication = IDL.Record({
     'id' : IDL.Nat,
-    'name' : IDL.Text,
-    'phone' : IDL.Text,
-    'address' : IDL.Text,
     'occupation' : IDL.Text,
-    'photo' : IDL.Text,
     'status' : IDL.Text,
+    'name' : IDL.Text,
+    'address' : IDL.Text,
     'timestamp' : Time,
+    'paymentDone' : IDL.Bool,
+    'phone' : IDL.Text,
+    'photo' : IDL.Text,
   });
+  
   return IDL.Service({
-    'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
+    'approveMemberApplication' : IDL.Func([IDL.Nat], [], []),
+    'clearAllDonations' : IDL.Func([], [], []),
+    'confirmMemberPayment' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
+    'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
+    'getAllDonations' : IDL.Func(
+        [],
+        [IDL.Vec(DonationWithScreenshot)],
+        ['query'],
+      ),
+    'getAllMemberApplications' : IDL.Func(
+        [],
+        [IDL.Vec(MemberApplication)],
+        ['query'],
+      ),
+    'getMemberByPhoneAndName' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Opt(MemberApplication)],
+        ['query'],
+      ),
     'submitDonation' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [],
         [],
       ),
-    'clearAllDonations' : IDL.Func([], [], []),
-    'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
     'submitMemberApplication' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [IDL.Nat],
         [],
       ),
-    'getAllMemberApplications' : IDL.Func([], [IDL.Vec(MemberApplication)], ['query']),
-    'approveMemberApplication' : IDL.Func([IDL.Nat], [], []),
-    'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
   });
 };
 

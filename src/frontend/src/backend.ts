@@ -89,7 +89,7 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface Donation {
+export interface DonationWithScreenshot {
     name: string;
     note: string;
     timestamp: Time;
@@ -100,51 +100,41 @@ export interface Donation {
 export type Time = bigint;
 export interface MemberApplication {
     id: bigint;
-    name: string;
-    phone: string;
-    address: string;
     occupation: string;
-    photo: string;
     status: string;
+    name: string;
+    address: string;
     timestamp: Time;
+    paymentDone: boolean;
+    phone: string;
+    photo: string;
 }
 export interface backendInterface {
-    getAllDonations(): Promise<Array<Donation>>;
-    submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
-    clearAllDonations(): Promise<void>;
-    deleteDonationById(id: bigint): Promise<void>;
-    submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
-    getAllMemberApplications(): Promise<Array<MemberApplication>>;
     approveMemberApplication(id: bigint): Promise<void>;
+    clearAllDonations(): Promise<void>;
+    confirmMemberPayment(id: bigint): Promise<boolean>;
+    deleteDonationById(id: bigint): Promise<void>;
     deleteMemberApplication(id: bigint): Promise<void>;
+    getAllDonations(): Promise<Array<DonationWithScreenshot>>;
+    getAllMemberApplications(): Promise<Array<MemberApplication>>;
+    getMemberByPhoneAndName(phone: string, name: string): Promise<MemberApplication | null>;
+    submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
+    submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
 }
+import type { MemberApplication as _MemberApplication } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
-    async getAllDonations(): Promise<Array<Donation>> {
+    async approveMemberApplication(arg0: bigint): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllDonations();
+                const result = await this.actor.approveMemberApplication(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllDonations();
-            return result;
-        }
-    }
-    async submitDonation(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3, arg4);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3, arg4);
+            const result = await this.actor.approveMemberApplication(arg0);
             return result;
         }
     }
@@ -162,51 +152,121 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async deleteDonationById(id: bigint): Promise<void> {
-        try {
-            const result = await (this.actor as any).deleteDonationById(id);
+    async confirmMemberPayment(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.confirmMemberPayment(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.confirmMemberPayment(arg0);
             return result;
-        } catch (e) {
-            if (this.processError) this.processError(e);
-            throw e;
         }
     }
-    async submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint> {
-        try {
-            const result = await (this.actor as any).submitMemberApplication(name, phone, address, occupation, photo);
+    async deleteDonationById(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteDonationById(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteDonationById(arg0);
             return result;
-        } catch (e) {
-            if (this.processError) this.processError(e);
-            throw e;
+        }
+    }
+    async deleteMemberApplication(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteMemberApplication(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteMemberApplication(arg0);
+            return result;
+        }
+    }
+    async getAllDonations(): Promise<Array<DonationWithScreenshot>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllDonations();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllDonations();
+            return result;
         }
     }
     async getAllMemberApplications(): Promise<Array<MemberApplication>> {
-        try {
-            const result = await (this.actor as any).getAllMemberApplications();
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllMemberApplications();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllMemberApplications();
             return result;
-        } catch (e) {
-            if (this.processError) this.processError(e);
-            throw e;
         }
     }
-    async approveMemberApplication(id: bigint): Promise<void> {
-        try {
-            const result = await (this.actor as any).approveMemberApplication(id);
-            return result;
-        } catch (e) {
-            if (this.processError) this.processError(e);
-            throw e;
+    async getMemberByPhoneAndName(arg0: string, arg1: string): Promise<MemberApplication | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMemberByPhoneAndName(arg0, arg1);
+                return from_candid_opt_n1(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMemberByPhoneAndName(arg0, arg1);
+            return from_candid_opt_n1(this._uploadFile, this._downloadFile, result);
         }
     }
-    async deleteMemberApplication(id: bigint): Promise<void> {
-        try {
-            const result = await (this.actor as any).deleteMemberApplication(id);
+    async submitDonation(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3, arg4);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitDonation(arg0, arg1, arg2, arg3, arg4);
             return result;
-        } catch (e) {
-            if (this.processError) this.processError(e);
-            throw e;
         }
     }
+    async submitMemberApplication(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitMemberApplication(arg0, arg1, arg2, arg3, arg4);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitMemberApplication(arg0, arg1, arg2, arg3, arg4);
+            return result;
+        }
+    }
+}
+function from_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MemberApplication]): MemberApplication | null {
+    return value.length === 0 ? null : value[0];
 }
 export interface CreateActorOptions {
     agent?: Agent;

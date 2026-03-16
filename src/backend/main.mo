@@ -1,8 +1,7 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Time "mo:core/Time";
-import Iter "mo:core/Iter";
-import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
 
 
 
@@ -32,6 +31,7 @@ actor {
     occupation : Text;
     photo : Text;
     status : Text; // "pending" | "approved"
+    paymentDone : Bool;
     timestamp : Time.Time;
   };
 
@@ -43,10 +43,6 @@ actor {
   let members = Map.empty<Nat, MemberApplication>();
 
   public shared ({ caller }) func submitDonation(name : Text, phone : Text, amount : Text, note : Text, screenshot : Text) : async () {
-    if (name == "") { Runtime.trap("Name cannot be empty") };
-    if (phone == "") { Runtime.trap("Phone number cannot be empty") };
-    if (amount == "") { Runtime.trap("Amount cannot be empty") };
-
     let donation : Donation = {
       name;
       phone;
@@ -74,7 +70,7 @@ actor {
         note = d.note;
         screenshot = ss;
         timestamp = d.timestamp;
-      }
+      };
     }).toArray();
   };
 
@@ -91,23 +87,21 @@ actor {
 
   // Membership functions
   public shared ({ caller }) func submitMemberApplication(name : Text, phone : Text, address : Text, occupation : Text, photo : Text) : async Nat {
-    if (name == "") { Runtime.trap("Name cannot be empty") };
-    if (phone == "") { Runtime.trap("Phone cannot be empty") };
-
+    let id = nextMemberId;
     let app : MemberApplication = {
-      id = nextMemberId;
+      id;
       name;
       phone;
       address;
       occupation;
       photo;
       status = "pending";
+      paymentDone = false;
       timestamp = Time.now();
     };
-    members.add(nextMemberId, app);
-    let id = nextMemberId;
+    members.add(id, app);
     nextMemberId += 1;
-    id
+    id;
   };
 
   public query ({ caller }) func getAllMemberApplications() : async [MemberApplication] {
@@ -125,15 +119,55 @@ actor {
           occupation = app.occupation;
           photo = app.photo;
           status = "approved";
+          paymentDone = app.paymentDone;
           timestamp = app.timestamp;
         };
         members.add(id, updated);
       };
-      case null { Runtime.trap("Member not found") };
+      case null {};
     };
   };
 
   public shared ({ caller }) func deleteMemberApplication(id : Nat) : async () {
     ignore members.remove(id);
+  };
+
+  // Public: find member by phone and name (case-insensitive trim)
+  public query func getMemberByPhoneAndName(phone : Text, name : Text) : async ?MemberApplication {
+    let phoneTrim = phone.trim(#char ' ');
+    let nameTrim = name.trim(#char ' ');
+    for ((_, app) in members.entries()) {
+      let phoneMatch = app.phone.trim(#char ' ') == phoneTrim;
+      let nameMatch = app.name.trim(#char ' ') == nameTrim;
+      if (phoneMatch and nameMatch) {
+        return ?app;
+      };
+    };
+    null;
+  };
+
+  // Public: confirm payment for a member (called after member pays via QR)
+  public shared func confirmMemberPayment(id : Nat) : async Bool {
+    switch (members.get(id)) {
+      case (?app) {
+        if (app.status == "approved") {
+          let updated : MemberApplication = {
+            id = app.id;
+            name = app.name;
+            phone = app.phone;
+            address = app.address;
+            occupation = app.occupation;
+            photo = app.photo;
+            status = app.status;
+            paymentDone = true;
+            timestamp = app.timestamp;
+          };
+          members.add(id, updated);
+          return true;
+        };
+        return false;
+      };
+      case null { return false };
+    };
   };
 };
