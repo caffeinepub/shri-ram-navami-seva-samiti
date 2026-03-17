@@ -111,6 +111,7 @@ interface MemberApplication {
   photo: string;
   status: string;
   paymentDone: boolean;
+  paymentScreenshot: string;
   timestamp: bigint;
 }
 
@@ -454,8 +455,10 @@ export default function App() {
     MemberApplication | null | "not_found"
   >(null);
   const [memberLookupLoading, setMemberLookupLoading] = useState(false);
-  const [memberPaymentConfirming, setMemberPaymentConfirming] = useState(false);
-  const [memberPaymentDone, setMemberPaymentDone] = useState(false);
+  const [paymentScreenshotFile, setPaymentScreenshotFile] =
+    useState<string>("");
+  const [paymentProofSubmitting, setPaymentProofSubmitting] = useState(false);
+  const [paymentProofSubmitted, setPaymentProofSubmitted] = useState(false);
   const [showMemberIDCard, setShowMemberIDCard] = useState(false);
 
   useEffect(() => {
@@ -636,7 +639,8 @@ export default function App() {
     setMemberLookupLoading(true);
     setMemberLookupResult(null);
     setShowMemberIDCard(false);
-    setMemberPaymentDone(false);
+    setPaymentProofSubmitted(false);
+    setPaymentScreenshotFile("");
     try {
       if (!actor) throw new Error("Not ready");
       const result = await (actor as any).getMemberByPhoneAndName(
@@ -659,23 +663,38 @@ export default function App() {
     }
   };
 
-  const handleConfirmMemberPayment = async () => {
-    if (!memberLookupResult || memberLookupResult === "not_found") return;
-    setMemberPaymentConfirming(true);
+  const handleSubmitPaymentProof = async () => {
+    if (
+      !memberLookupResult ||
+      memberLookupResult === "not_found" ||
+      !paymentScreenshotFile
+    )
+      return;
+    setPaymentProofSubmitting(true);
     try {
       if (!actor) throw new Error("Not ready");
-      const success = await (actor as any).confirmMemberPayment(
+      const compressed = await ensureSizeLimit(paymentScreenshotFile, 300_000);
+      await (actor as any).submitPaymentProof(
         memberLookupResult.id,
+        compressed,
       );
-      if (success) {
-        setMemberPaymentDone(true);
-        setShowMemberIDCard(true);
-        setMemberLookupResult({ ...memberLookupResult, paymentDone: true });
-      }
+      setPaymentProofSubmitted(true);
     } catch (e) {
       console.error(e);
     } finally {
-      setMemberPaymentConfirming(false);
+      setPaymentProofSubmitting(false);
+    }
+  };
+
+  const handleAdminConfirmPayment = async (id: bigint) => {
+    try {
+      if (!actor) throw new Error("Not ready");
+      await (actor as any).confirmMemberPayment(id);
+      setMemberApplications((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, paymentDone: true } : m)),
+      );
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -1694,8 +1713,7 @@ export default function App() {
                 memberLookupResult &&
                 memberLookupResult !== "not_found" &&
                 memberLookupResult.status === "approved" &&
-                !memberLookupResult.paymentDone &&
-                !memberPaymentDone && (
+                !memberLookupResult.paymentDone && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -1720,20 +1738,56 @@ export default function App() {
                         className="w-48 h-48 object-contain mx-auto rounded-xl border-2 border-saffron-300 shadow-md"
                       />
                     </div>
-                    <button
-                      type="button"
-                      data-ocid="member_lookup.confirm_button"
-                      onClick={handleConfirmMemberPayment}
-                      disabled={memberPaymentConfirming}
-                      className="hindi-text w-full py-3 rounded-xl font-bold text-white text-base transition-all disabled:opacity-50"
-                      style={{
-                        background: "linear-gradient(135deg, #16a34a, #15803d)",
-                      }}
-                    >
-                      {memberPaymentConfirming
-                        ? "पुष्टि हो रही है..."
-                        : "✅ मैंने भुगतान कर दिया है"}
-                    </button>
+                    {paymentProofSubmitted ? (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                        <p className="text-2xl mb-1">📸</p>
+                        <p className="hindi-text text-blue-800 font-bold">
+                          आपका payment screenshot submit हो गया।
+                        </p>
+                        <p className="hindi-text text-blue-600 text-sm mt-1">
+                          Admin की जाँच के बाद आपका ID Card मिलेगा।
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="hindi-text text-saffron-700 font-semibold text-sm text-center">
+                          भुगतान का screenshot अपलोड करें:
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          data-ocid="member_lookup.upload_button"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (ev) =>
+                              setPaymentScreenshotFile(
+                                ev.target?.result as string,
+                              );
+                            reader.readAsDataURL(file);
+                          }}
+                          className="hindi-text w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-saffron-100 file:text-saffron-700 hover:file:bg-saffron-200 cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          data-ocid="member_lookup.submit_button"
+                          onClick={handleSubmitPaymentProof}
+                          disabled={
+                            paymentProofSubmitting || !paymentScreenshotFile
+                          }
+                          className="hindi-text w-full py-3 rounded-xl font-bold text-white text-base transition-all disabled:opacity-50"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #16a34a, #15803d)",
+                          }}
+                        >
+                          {paymentProofSubmitting
+                            ? "Submit हो रहा है..."
+                            : "📤 Payment Screenshot Submit करें"}
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -3274,9 +3328,33 @@ export default function App() {
                                         : { color: "oklch(0.60 0.06 240)" }
                                     }
                                   >
-                                    {m.paymentDone ? "💰 हुआ" : "बाकी"}
+                                    {m.paymentDone
+                                      ? "💰 हुआ"
+                                      : m.paymentScreenshot &&
+                                          m.paymentScreenshot !== ""
+                                        ? "📸 Screenshot मिला"
+                                        : "बाकी"}
                                   </span>
                                 </div>
+                                {m.paymentScreenshot &&
+                                  m.paymentScreenshot !== "" &&
+                                  !m.paymentDone && (
+                                    <div className="mt-2">
+                                      <p
+                                        className="text-xs font-semibold mb-1"
+                                        style={{
+                                          color: "oklch(0.55 0.06 240)",
+                                        }}
+                                      >
+                                        Payment Screenshot:
+                                      </p>
+                                      <img
+                                        src={m.paymentScreenshot}
+                                        alt="Payment proof"
+                                        className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                                      />
+                                    </div>
+                                  )}
                                 <p style={{ color: "oklch(0.70 0.03 240)" }}>
                                   {formatTimestamp(m.timestamp)}
                                 </p>
@@ -3297,6 +3375,25 @@ export default function App() {
                                     ✅ स्वीकृत करें
                                   </button>
                                 )}
+                                {m.status === "approved" &&
+                                  m.paymentScreenshot &&
+                                  m.paymentScreenshot !== "" &&
+                                  !m.paymentDone && (
+                                    <button
+                                      type="button"
+                                      data-ocid={`admin.members.confirm_button.${idx + 1}`}
+                                      onClick={() =>
+                                        handleAdminConfirmPayment(m.id)
+                                      }
+                                      className="hindi-text flex-1 py-2 rounded-xl font-bold text-xs text-white transition-all hover:opacity-90"
+                                      style={{
+                                        background:
+                                          "linear-gradient(135deg, oklch(0.50 0.16 145), oklch(0.44 0.14 145))",
+                                      }}
+                                    >
+                                      💰 Payment Confirm करें
+                                    </button>
+                                  )}
                                 {m.status === "approved" && (
                                   <button
                                     type="button"

@@ -1,30 +1,24 @@
 # Shri Ram Navami Seva Samiti
 
 ## Current State
-Admin panel opens as a modal dialog with max-width 3xl and maxHeight 90vh. After login, it shows tabs and content inside the modal. Design is saffron/golden themed but constrained inside a popup.
+After admin approval, member sees QR code and a 'मैंने भुगतान कर दिया है' button. Tapping this button directly calls `confirmMemberPayment` on the backend, instantly marking payment as done and unlocking ID card — with no actual verification.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Full-screen admin panel view after login (covers entire viewport, like a dedicated page)
-- Professional sidebar navigation for admin panel (tabs on left side instead of top)
-- Stats/summary cards at the top of each section
-- Better table/card layout for donations and members with more spacing and polish
-- Professional admin header with logout button and user info
+- Backend: `paymentScreenshot` field to MemberApplication type
+- Backend: `submitPaymentProof(id, screenshot)` public function — members call this to upload their payment screenshot
+- Frontend (member side): Replace the single button with a screenshot upload form; after upload show 'Admin की पुष्टि का इंतज़ार करें' message
+- Frontend (admin panel): Show payment screenshot thumbnail for each approved member; add 'भुगतान पुष्टि करें' button that calls `confirmMemberPayment`
 
 ### Modify
-- After successful login, admin panel should expand to full screen (fixed inset-0, z-[100])
-- Login screen stays as centered card (not full screen)
-- Admin panel layout: left sidebar with navigation + right content area
-- Overall visual quality: more professional dashboard look with better typography, spacing, and visual hierarchy
+- `confirmMemberPayment` is now only used from admin panel (not directly by member)
+- Member success state only shows after `paymentDone === true` (set by admin)
 
 ### Remove
-- Nothing removed, only enhanced
+- Remove member-side direct payment confirm button (`handleConfirmMemberPayment`)
 
 ## Implementation Plan
-1. Change adminOpen modal: login shows as centered modal overlay, but after adminAuthenticated becomes true, switch to full-screen layout (fixed inset-0)
-2. Create a sidebar with navigation items (दान इतिहास, सदस्यता आवेदन) on the left
-3. Right content area with proper header showing admin info + logout button
-4. Stats cards showing count summaries at top of each tab
-5. Improve donation and member cards with better spacing and visual design
-6. Professional color scheme consistent with site's saffron/golden theme
+1. Update backend: add `paymentScreenshot` field, add `submitPaymentProof` function
+2. Update frontend member lookup section: screenshot upload form, pending verification message
+3. Update admin panel: show payment screenshot, add confirm payment button

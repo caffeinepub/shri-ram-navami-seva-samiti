@@ -35,12 +35,27 @@ actor {
     timestamp : Time.Time;
   };
 
+  public type MemberApplicationWithProof = {
+    id : Nat;
+    name : Text;
+    phone : Text;
+    address : Text;
+    occupation : Text;
+    photo : Text;
+    status : Text;
+    paymentDone : Bool;
+    paymentScreenshot : Text;
+    timestamp : Time.Time;
+  };
+
   var nextDonationId = 0;
   let donations = Map.empty<Nat, Donation>();
   let donationScreenshots = Map.empty<Nat, Text>();
 
   var nextMemberId = 0;
   let members = Map.empty<Nat, MemberApplication>();
+  // Separate map for payment screenshots (avoids stable type migration)
+  let memberPaymentScreenshots = Map.empty<Nat, Text>();
 
   public shared ({ caller }) func submitDonation(name : Text, phone : Text, amount : Text, note : Text, screenshot : Text) : async () {
     let donation : Donation = {
@@ -104,8 +119,25 @@ actor {
     id;
   };
 
-  public query ({ caller }) func getAllMemberApplications() : async [MemberApplication] {
-    members.values().toArray();
+  public query ({ caller }) func getAllMemberApplications() : async [MemberApplicationWithProof] {
+    members.values().map(func(app : MemberApplication) : MemberApplicationWithProof {
+      let ps = switch (memberPaymentScreenshots.get(app.id)) {
+        case (?s) { s };
+        case null { "" };
+      };
+      {
+        id = app.id;
+        name = app.name;
+        phone = app.phone;
+        address = app.address;
+        occupation = app.occupation;
+        photo = app.photo;
+        status = app.status;
+        paymentDone = app.paymentDone;
+        paymentScreenshot = ps;
+        timestamp = app.timestamp;
+      };
+    }).toArray();
   };
 
   public shared ({ caller }) func approveMemberApplication(id : Nat) : async () {
@@ -130,23 +162,53 @@ actor {
 
   public shared ({ caller }) func deleteMemberApplication(id : Nat) : async () {
     ignore members.remove(id);
+    ignore memberPaymentScreenshots.remove(id);
   };
 
   // Public: find member by phone and name (case-insensitive trim)
-  public query func getMemberByPhoneAndName(phone : Text, name : Text) : async ?MemberApplication {
+  public query func getMemberByPhoneAndName(phone : Text, name : Text) : async ?MemberApplicationWithProof {
     let phoneTrim = phone.trim(#char ' ');
     let nameTrim = name.trim(#char ' ');
     for ((_, app) in members.entries()) {
       let phoneMatch = app.phone.trim(#char ' ') == phoneTrim;
       let nameMatch = app.name.trim(#char ' ') == nameTrim;
       if (phoneMatch and nameMatch) {
-        return ?app;
+        let ps = switch (memberPaymentScreenshots.get(app.id)) {
+          case (?s) { s };
+          case null { "" };
+        };
+        return ?{
+          id = app.id;
+          name = app.name;
+          phone = app.phone;
+          address = app.address;
+          occupation = app.occupation;
+          photo = app.photo;
+          status = app.status;
+          paymentDone = app.paymentDone;
+          paymentScreenshot = ps;
+          timestamp = app.timestamp;
+        };
       };
     };
     null;
   };
 
-  // Public: confirm payment for a member (called after member pays via QR)
+  // Public: member submits payment screenshot proof
+  public shared func submitPaymentProof(id : Nat, screenshot : Text) : async Bool {
+    switch (members.get(id)) {
+      case (?app) {
+        if (app.status == "approved" and not app.paymentDone) {
+          memberPaymentScreenshots.add(id, screenshot);
+          return true;
+        };
+        return false;
+      };
+      case null { return false };
+    };
+  };
+
+  // Admin only: confirm payment after verifying screenshot
   public shared func confirmMemberPayment(id : Nat) : async Bool {
     switch (members.get(id)) {
       case (?app) {
