@@ -1,26 +1,30 @@
 # Shri Ram Navami Seva Samiti
 
 ## Current State
-A Hindi-language static website for Ramnavami Seva Samiti with hero, about, events, donation (QR code only), and social sections. Footer has 'Website Designed by: Prakash Kumar' in small text.
+Admin panel opens as a modal dialog with max-width 3xl and maxHeight 90vh. After login, it shows tabs and content inside the modal. Design is saffron/golden themed but constrained inside a popup.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Donation details form below the QR code in the donation section: fields for donor name, phone number, amount paid, and a message/note (optional)
-- On form submit, save the donation record to the backend canister
-- Show a success confirmation card after submission
-- Admin view section (accessible via a button at bottom of donation section) to view all submitted donation records in a table/list
-- Admin panel is password-protected (simple PIN: 1234) for privacy
+- Full-screen admin panel view after login (covers entire viewport, like a dedicated page)
+- Professional sidebar navigation for admin panel (tabs on left side instead of top)
+- Stats/summary cards at the top of each section
+- Better table/card layout for donations and members with more spacing and polish
+- Professional admin header with logout button and user info
 
 ### Modify
-- Footer: 'Website Designed by: Prakash Kumar' — make it larger (text-base or text-lg), styled more prominently with a subtle border/highlight, not just a tiny footnote
+- After successful login, admin panel should expand to full screen (fixed inset-0, z-[100])
+- Login screen stays as centered card (not full screen)
+- Admin panel layout: left sidebar with navigation + right content area
+- Overall visual quality: more professional dashboard look with better typography, spacing, and visual hierarchy
 
 ### Remove
-- Nothing removed
+- Nothing removed, only enhanced
 
 ## Implementation Plan
-1. Motoko backend: `submitDonation(name, phone, amount, note)` → stores DonationRecord with timestamp; `getDonations()` → returns all records
-2. Frontend: Add DonationForm component in donation section with fields + submit button
-3. Show success state after submit
-4. Admin panel: PIN-protected dialog/section showing all donation records
-5. Footer: increase Prakash Kumar credit size and style
+1. Change adminOpen modal: login shows as centered modal overlay, but after adminAuthenticated becomes true, switch to full-screen layout (fixed inset-0)
+2. Create a sidebar with navigation items (दान इतिहास, सदस्यता आवेदन) on the left
+3. Right content area with proper header showing admin info + logout button
+4. Stats cards showing count summaries at top of each tab
+5. Improve donation and member cards with better spacing and visual design
+6. Professional color scheme consistent with site's saffron/golden theme

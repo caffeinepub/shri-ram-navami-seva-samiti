@@ -1,4 +1,13 @@
-import { Download, Heart, Loader2, Lock, Users, X } from "lucide-react";
+import {
+  Download,
+  Heart,
+  Loader2,
+  Lock,
+  Shield,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { SiFacebook, SiInstagram, SiYoutube } from "react-icons/si";
@@ -406,8 +415,9 @@ export default function App() {
 
   // Admin panel state
   const [adminOpen, setAdminOpen] = useState(false);
-  const [adminPin, setAdminPin] = useState("");
-  const [adminPinError, setAdminPinError] = useState(false);
+  const [adminUserId, setAdminUserId] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminLoginError, setAdminLoginError] = useState("");
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(false);
@@ -548,11 +558,11 @@ export default function App() {
     }
   };
 
-  const handleAdminPinSubmit = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminPin === "8102") {
+    if (adminUserId === "ram841236" && adminPassword === "Ram@8102") {
       setAdminAuthenticated(true);
-      setAdminPinError(false);
+      setAdminLoginError("");
       // Load donations
       setLoadingDonations(true);
       try {
@@ -576,14 +586,15 @@ export default function App() {
         setLoadingMembers(false);
       }
     } else {
-      setAdminPinError(true);
+      setAdminLoginError("गलत User ID या Password। पुनः प्रयास करें।");
     }
   };
 
   const handleAdminClose = () => {
     setAdminOpen(false);
-    setAdminPin("");
-    setAdminPinError(false);
+    setAdminUserId("");
+    setAdminPassword("");
+    setAdminLoginError("");
     setAdminAuthenticated(false);
     setDonations([]);
     setMemberApplications([]);
@@ -2227,445 +2238,1139 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ── ADMIN MODAL ── */}
+      {/* ── ADMIN PANEL (Login overlay / Full-screen dashboard) ── */}
       <AnimatePresence>
-        {adminOpen && (
+        {adminOpen && !adminAuthenticated && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.7)" }}
+            style={{ background: "rgba(0,0,0,0.75)" }}
             onClick={(e) => e.target === e.currentTarget && handleAdminClose()}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.92, opacity: 0, y: 24 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
+              exit={{ scale: 0.92, opacity: 0, y: 24 }}
+              transition={{ type: "spring", bounce: 0.28, duration: 0.4 }}
               data-ocid="admin.dialog"
-              className="relative w-full max-w-3xl rounded-2xl overflow-hidden"
+              className="relative w-full max-w-sm rounded-2xl overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.96 0.03 82), oklch(0.98 0.02 87))",
-                border: "2px solid oklch(0.75 0.14 58)",
-                boxShadow: "0 24px 80px rgba(0,0,0,0.5)",
-                maxHeight: "90vh",
+                background: "#fff",
+                boxShadow: "0 32px 96px rgba(0,0,0,0.45)",
               }}
             >
-              {/* Header */}
               <div
-                className="flex items-center justify-between px-6 py-4"
+                className="h-1.5 w-full"
                 style={{
                   background:
-                    "linear-gradient(135deg, oklch(0.35 0.10 50), oklch(0.28 0.08 45))",
+                    "linear-gradient(90deg, oklch(0.62 0.18 45), oklch(0.72 0.16 55), oklch(0.62 0.18 45))",
                 }}
+              />
+              <div className="px-8 py-8">
+                <div className="text-center mb-7">
+                  <div
+                    className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, oklch(0.62 0.18 45), oklch(0.55 0.16 40))",
+                    }}
+                  >
+                    <Shield className="w-8 h-8 text-white" />
+                  </div>
+                  <h3
+                    className="hindi-text text-2xl font-bold"
+                    style={{ color: "oklch(0.25 0.05 45)" }}
+                  >
+                    Admin Login
+                  </h3>
+                  <p
+                    className="hindi-text text-sm mt-1"
+                    style={{ color: "oklch(0.5 0.06 45)" }}
+                  >
+                    कृपया अपनी जानकारी दर्ज करें
+                  </p>
+                </div>
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="admin-userid"
+                      className="hindi-text block text-xs font-bold mb-1.5 uppercase tracking-wider"
+                      style={{ color: "oklch(0.45 0.08 45)" }}
+                    >
+                      User ID
+                    </label>
+                    <div className="relative">
+                      <User
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                        style={{ color: "oklch(0.65 0.10 45)" }}
+                      />
+                      <input
+                        type="text"
+                        value={adminUserId}
+                        onChange={(e) => setAdminUserId(e.target.value)}
+                        placeholder="User ID दर्ज करें"
+                        id="admin-userid"
+                        data-ocid="admin.input"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl text-sm transition-all outline-none"
+                        style={{
+                          border: "1.5px solid oklch(0.88 0.05 45)",
+                          background: "oklch(0.98 0.01 80)",
+                          color: "oklch(0.25 0.05 45)",
+                        }}
+                        onFocus={(e) => {
+                          (e.target as HTMLInputElement).style.borderColor =
+                            "oklch(0.62 0.18 45)";
+                          (e.target as HTMLInputElement).style.boxShadow =
+                            "0 0 0 3px oklch(0.62 0.18 45 / 0.15)";
+                        }}
+                        onBlur={(e) => {
+                          (e.target as HTMLInputElement).style.borderColor =
+                            "oklch(0.88 0.05 45)";
+                          (e.target as HTMLInputElement).style.boxShadow =
+                            "none";
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="admin-password"
+                      className="hindi-text block text-xs font-bold mb-1.5 uppercase tracking-wider"
+                      style={{ color: "oklch(0.45 0.08 45)" }}
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                        style={{ color: "oklch(0.65 0.10 45)" }}
+                      />
+                      <input
+                        type="password"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                        placeholder="Password दर्ज करें"
+                        id="admin-password"
+                        data-ocid="admin.password.input"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl text-sm transition-all outline-none"
+                        style={{
+                          border: "1.5px solid oklch(0.88 0.05 45)",
+                          background: "oklch(0.98 0.01 80)",
+                          color: "oklch(0.25 0.05 45)",
+                        }}
+                        onFocus={(e) => {
+                          (e.target as HTMLInputElement).style.borderColor =
+                            "oklch(0.62 0.18 45)";
+                          (e.target as HTMLInputElement).style.boxShadow =
+                            "0 0 0 3px oklch(0.62 0.18 45 / 0.15)";
+                        }}
+                        onBlur={(e) => {
+                          (e.target as HTMLInputElement).style.borderColor =
+                            "oklch(0.88 0.05 45)";
+                          (e.target as HTMLInputElement).style.boxShadow =
+                            "none";
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {adminLoginError && (
+                    <p
+                      data-ocid="admin.error_state"
+                      className="hindi-text text-sm text-center rounded-xl px-3 py-2.5"
+                      style={{
+                        color: "oklch(0.45 0.2 25)",
+                        background: "oklch(0.97 0.03 25)",
+                      }}
+                    >
+                      {adminLoginError}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    data-ocid="admin.submit_button"
+                    className="hindi-text w-full py-3 rounded-xl font-bold text-base text-white shadow-md transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, oklch(0.62 0.18 45), oklch(0.55 0.16 40))",
+                    }}
+                  >
+                    Login करें
+                  </button>
+                </form>
+                <button
+                  type="button"
+                  data-ocid="admin.close_button"
+                  onClick={handleAdminClose}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100"
+                  style={{ color: "oklch(0.5 0.05 45)" }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── ADMIN FULL-SCREEN DASHBOARD (after login) ── */}
+      <AnimatePresence>
+        {adminOpen && adminAuthenticated && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] flex"
+            style={{ background: "oklch(0.96 0.01 240)" }}
+            data-ocid="admin.dialog"
+          >
+            {/* Sidebar */}
+            <aside
+              className="hidden md:flex flex-col flex-shrink-0 h-full"
+              style={{
+                width: "248px",
+                background:
+                  "linear-gradient(180deg, oklch(0.28 0.08 45) 0%, oklch(0.22 0.06 42) 100%)",
+                borderRight: "1px solid oklch(0.32 0.09 45)",
+              }}
+            >
+              <div
+                className="px-6 py-6 border-b"
+                style={{ borderColor: "oklch(0.35 0.08 45)" }}
               >
                 <div className="flex items-center gap-3">
-                  <Lock className="w-5 h-5 text-saffron-300" />
-                  <h2 className="hindi-text text-saffron-100 font-bold text-xl">
-                    Admin Panel
-                  </h2>
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "oklch(0.62 0.18 45)" }}
+                  >
+                    <Shield className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="hindi-text font-bold text-white text-sm leading-tight">
+                      Admin Panel
+                    </p>
+                    <p
+                      className="hindi-text text-xs"
+                      style={{ color: "oklch(0.72 0.10 55)" }}
+                    >
+                      श्री राम नवमी
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <nav className="flex-1 px-3 py-4 space-y-1">
+                <button
+                  type="button"
+                  data-ocid="admin.donations.tab"
+                  onClick={() => setAdminTab("donations")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                  style={
+                    adminTab === "donations"
+                      ? { background: "oklch(0.62 0.18 45)", color: "#fff" }
+                      : { color: "oklch(0.80 0.06 55)" }
+                  }
+                >
+                  <svg
+                    className="w-5 h-5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="hindi-text font-semibold text-sm flex-1">
+                    दान इतिहास
+                  </span>
+                  {donations.length > 0 && (
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={
+                        adminTab === "donations"
+                          ? {
+                              background: "rgba(255,255,255,0.25)",
+                              color: "#fff",
+                            }
+                          : { background: "oklch(0.62 0.18 45)", color: "#fff" }
+                      }
+                    >
+                      {donations.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  data-ocid="admin.members.tab"
+                  onClick={() => setAdminTab("members")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                  style={
+                    adminTab === "members"
+                      ? { background: "oklch(0.62 0.18 45)", color: "#fff" }
+                      : { color: "oklch(0.80 0.06 55)" }
+                  }
+                >
+                  <Users className="w-5 h-5 flex-shrink-0" />
+                  <span className="hindi-text font-semibold text-sm flex-1">
+                    सदस्यता आवेदन
+                  </span>
+                  {memberApplications.length > 0 && (
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={
+                        adminTab === "members"
+                          ? {
+                              background: "rgba(255,255,255,0.25)",
+                              color: "#fff",
+                            }
+                          : { background: "oklch(0.62 0.18 45)", color: "#fff" }
+                      }
+                    >
+                      {memberApplications.length}
+                    </span>
+                  )}
+                </button>
+              </nav>
+
+              <div
+                className="px-3 py-4 border-t"
+                style={{ borderColor: "oklch(0.35 0.08 45)" }}
+              >
+                <div
+                  className="flex items-center gap-3 px-3 py-2 mb-2 rounded-xl"
+                  style={{ background: "oklch(0.32 0.07 45)" }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: "oklch(0.62 0.18 45)" }}
+                  >
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs font-bold font-mono truncate">
+                      ram841236
+                    </p>
+                    <p
+                      className="text-xs"
+                      style={{ color: "oklch(0.65 0.08 55)" }}
+                    >
+                      Administrator
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   data-ocid="admin.close_button"
                   onClick={handleAdminClose}
-                  className="text-saffron-300 hover:text-white transition-colors p-1"
+                  className="hindi-text w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                  style={{
+                    color: "oklch(0.80 0.10 25)",
+                    background: "oklch(0.28 0.06 25 / 0.5)",
+                  }}
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-4 h-4" />
+                  Logout
                 </button>
               </div>
+            </aside>
 
-              <div
-                className="overflow-y-auto"
-                style={{ maxHeight: "calc(90vh - 70px)" }}
+            {/* Main content */}
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+              {/* Top header bar */}
+              <header
+                className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+                style={{
+                  background: "#fff",
+                  borderBottom: "1px solid oklch(0.92 0.02 240)",
+                  boxShadow: "0 1px 4px oklch(0 0 0 / 0.06)",
+                }}
               >
-                {!adminAuthenticated ? (
-                  <div className="px-6 py-8">
-                    <p className="hindi-text text-saffron-700 text-center mb-6">
-                      Admin PIN दर्ज करें
-                    </p>
-                    <form
-                      onSubmit={handleAdminPinSubmit}
-                      className="max-w-xs mx-auto space-y-4"
+                <div>
+                  <h1
+                    className="hindi-text font-bold text-lg"
+                    style={{ color: "oklch(0.22 0.05 45)" }}
+                  >
+                    {adminTab === "donations" ? "दान इतिहास" : "सदस्यता आवेदन"}
+                  </h1>
+                  <p
+                    className="hindi-text text-xs mt-0.5"
+                    style={{ color: "oklch(0.55 0.05 240)" }}
+                  >
+                    {adminTab === "donations"
+                      ? `कुल ${donations.length} दान प्राप्त हुए`
+                      : `कुल ${memberApplications.length} आवेदन`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex md:hidden gap-1">
+                    <button
+                      type="button"
+                      data-ocid="admin.donations.tab"
+                      onClick={() => setAdminTab("donations")}
+                      className="hindi-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      style={
+                        adminTab === "donations"
+                          ? { background: "oklch(0.62 0.18 45)", color: "#fff" }
+                          : {
+                              background: "oklch(0.95 0.02 80)",
+                              color: "oklch(0.4 0.08 45)",
+                            }
+                      }
                     >
-                      <input
-                        type="password"
-                        value={adminPin}
-                        onChange={(e) => setAdminPin(e.target.value)}
-                        placeholder="PIN"
-                        data-ocid="admin.input"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 text-center text-2xl tracking-widest focus:border-saffron-500 focus:outline-none"
-                      />
-                      {adminPinError && (
-                        <p
-                          data-ocid="admin.error_state"
-                          className="hindi-text text-red-600 text-sm text-center"
-                        >
-                          गलत PIN। पुनः प्रयास करें।
-                        </p>
-                      )}
-                      <button
-                        type="submit"
-                        data-ocid="admin.submit_button"
-                        className="btn-saffron hindi-text w-full py-3 rounded-xl font-bold"
+                      दान ({donations.length})
+                    </button>
+                    <button
+                      type="button"
+                      data-ocid="admin.members.tab"
+                      onClick={() => setAdminTab("members")}
+                      className="hindi-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      style={
+                        adminTab === "members"
+                          ? { background: "oklch(0.62 0.18 45)", color: "#fff" }
+                          : {
+                              background: "oklch(0.95 0.02 80)",
+                              color: "oklch(0.4 0.08 45)",
+                            }
+                      }
+                    >
+                      सदस्य ({memberApplications.length})
+                    </button>
+                  </div>
+                  {adminTab === "donations" && (
+                    <button
+                      type="button"
+                      data-ocid="admin.clear_history.button"
+                      disabled={clearingHistory || donations.length === 0}
+                      onClick={async () => {
+                        if (
+                          !window.confirm("क्या आप सभी दान इतिहास हटाना चाहते हैं?")
+                        )
+                          return;
+                        setClearingHistory(true);
+                        try {
+                          if (actor) {
+                            await actor.clearAllDonations();
+                            setDonations([]);
+                          }
+                        } catch {
+                          /* ignore */
+                        } finally {
+                          setClearingHistory(false);
+                        }
+                      }}
+                      className="hindi-text text-xs font-bold px-4 py-2 rounded-xl transition-all disabled:opacity-40"
+                      style={{
+                        background: "oklch(0.97 0.03 25)",
+                        color: "oklch(0.45 0.20 25)",
+                        border: "1.5px solid oklch(0.88 0.08 25)",
+                      }}
+                    >
+                      {clearingHistory ? "हटाया जा रहा है..." : "🗑 सभी हटाएं"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    data-ocid="admin.close_button"
+                    onClick={handleAdminClose}
+                    className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                    style={{
+                      background: "oklch(0.95 0.02 240)",
+                      color: "oklch(0.4 0.05 240)",
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </header>
+
+              {/* Stats bar */}
+              <div
+                className="px-6 py-3 flex-shrink-0"
+                style={{
+                  background: "oklch(0.99 0.005 240)",
+                  borderBottom: "1px solid oklch(0.93 0.02 240)",
+                }}
+              >
+                {adminTab === "donations" ? (
+                  <div className="flex gap-4">
+                    <div
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                      style={{
+                        background: "#fff",
+                        border: "1px solid oklch(0.90 0.04 55)",
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "oklch(0.96 0.06 55)" }}
                       >
-                        प्रवेश करें
-                      </button>
-                    </form>
+                        <svg
+                          className="w-4 h-4"
+                          style={{ color: "oklch(0.62 0.18 45)" }}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p
+                          className="text-xl font-bold leading-none"
+                          style={{ color: "oklch(0.25 0.08 45)" }}
+                        >
+                          {donations.length}
+                        </p>
+                        <p
+                          className="hindi-text text-xs"
+                          style={{ color: "oklch(0.55 0.06 45)" }}
+                        >
+                          कुल दान
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                      style={{
+                        background: "#fff",
+                        border: "1px solid oklch(0.90 0.04 145)",
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "oklch(0.96 0.06 140)" }}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          style={{ color: "oklch(0.50 0.14 145)" }}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p
+                          className="text-xl font-bold leading-none"
+                          style={{ color: "oklch(0.25 0.06 145)" }}
+                        >
+                          ₹
+                          {donations
+                            .reduce(
+                              (sum, d) => sum + (Number(d.amount) || 0),
+                              0,
+                            )
+                            .toLocaleString("en-IN")}
+                        </p>
+                        <p
+                          className="hindi-text text-xs"
+                          style={{ color: "oklch(0.5 0.06 145)" }}
+                        >
+                          कुल राशि
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="px-4 py-4">
-                    {/* Tabs */}
-                    <div className="flex gap-2 mb-4 border-b border-saffron-200 pb-2">
-                      <button
-                        type="button"
-                        data-ocid="admin.donations.tab"
-                        onClick={() => setAdminTab("donations")}
-                        className={`hindi-text font-bold px-4 py-2 rounded-t-xl text-sm transition-all ${
-                          adminTab === "donations"
-                            ? "bg-saffron-600 text-white"
-                            : "text-saffron-600 hover:bg-saffron-100"
-                        }`}
+                  <div className="flex gap-4">
+                    <div
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                      style={{
+                        background: "#fff",
+                        border: "1px solid oklch(0.90 0.04 240)",
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "oklch(0.96 0.04 240)" }}
                       >
-                        दान इतिहास ({donations.length})
-                      </button>
-                      <button
-                        type="button"
-                        data-ocid="admin.members.tab"
-                        onClick={() => setAdminTab("members")}
-                        className={`hindi-text font-bold px-4 py-2 rounded-t-xl text-sm transition-all ${
-                          adminTab === "members"
-                            ? "bg-orange-600 text-white"
-                            : "text-orange-600 hover:bg-orange-50"
-                        }`}
-                      >
-                        <span className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          सदस्यता आवेदन ({memberApplications.length})
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* DONATIONS TAB */}
-                    {adminTab === "donations" && (
+                        <Users
+                          className="w-4 h-4"
+                          style={{ color: "oklch(0.45 0.12 240)" }}
+                        />
+                      </div>
                       <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="hindi-text text-saffron-700 font-semibold">
-                            कुल दान: {donations.length}
-                          </p>
-                          <button
-                            type="button"
-                            data-ocid="admin.clear_history.button"
-                            disabled={clearingHistory || donations.length === 0}
-                            onClick={async () => {
-                              if (
-                                !window.confirm(
-                                  "क्या आप सभी दान इतिहास हटाना चाहते हैं?",
-                                )
-                              )
-                                return;
-                              setClearingHistory(true);
-                              try {
-                                if (actor) {
-                                  await actor.clearAllDonations();
-                                  setDonations([]);
-                                }
-                              } catch {
-                                /* ignore */
-                              } finally {
-                                setClearingHistory(false);
-                              }
-                            }}
-                            className="hindi-text text-xs bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
-                          >
-                            {clearingHistory ? "हटाया जा रहा है..." : "सभी हटाएं"}
-                          </button>
+                        <p
+                          className="text-xl font-bold leading-none"
+                          style={{ color: "oklch(0.25 0.06 240)" }}
+                        >
+                          {memberApplications.length}
+                        </p>
+                        <p
+                          className="hindi-text text-xs"
+                          style={{ color: "oklch(0.55 0.06 240)" }}
+                        >
+                          कुल आवेदन
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                      style={{
+                        background: "#fff",
+                        border: "1px solid oklch(0.90 0.04 145)",
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "oklch(0.96 0.06 145)" }}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          style={{ color: "oklch(0.50 0.14 145)" }}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p
+                          className="text-xl font-bold leading-none"
+                          style={{ color: "oklch(0.25 0.06 145)" }}
+                        >
+                          {
+                            memberApplications.filter(
+                              (m) => m.status === "approved",
+                            ).length
+                          }
+                        </p>
+                        <p
+                          className="hindi-text text-xs"
+                          style={{ color: "oklch(0.5 0.06 145)" }}
+                        >
+                          स्वीकृत
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                      style={{
+                        background: "#fff",
+                        border: "1px solid oklch(0.90 0.06 80)",
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "oklch(0.97 0.05 80)" }}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          style={{ color: "oklch(0.60 0.15 80)" }}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p
+                          className="text-xl font-bold leading-none"
+                          style={{ color: "oklch(0.35 0.10 80)" }}
+                        >
+                          {
+                            memberApplications.filter(
+                              (m) => m.status !== "approved",
+                            ).length
+                          }
+                        </p>
+                        <p
+                          className="hindi-text text-xs"
+                          style={{ color: "oklch(0.55 0.08 80)" }}
+                        >
+                          लंबित
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Scrollable content area */}
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                {adminTab === "donations" && (
+                  <div>
+                    {loadingDonations ? (
+                      <div
+                        data-ocid="admin.donations.loading_state"
+                        className="flex items-center justify-center py-20 gap-3"
+                        style={{ color: "oklch(0.62 0.18 45)" }}
+                      >
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="hindi-text font-semibold">
+                          लोड हो रहा है...
+                        </span>
+                      </div>
+                    ) : donations.length === 0 ? (
+                      <div
+                        data-ocid="admin.donations.empty_state"
+                        className="flex flex-col items-center justify-center py-24 gap-3"
+                      >
+                        <div
+                          className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl"
+                          style={{ background: "oklch(0.95 0.04 55)" }}
+                        >
+                          📭
                         </div>
-                        {loadingDonations ? (
+                        <p
+                          className="hindi-text font-semibold text-lg"
+                          style={{ color: "oklch(0.45 0.06 240)" }}
+                        >
+                          अभी कोई दान विवरण नहीं है
+                        </p>
+                        <p
+                          className="hindi-text text-sm"
+                          style={{ color: "oklch(0.62 0.04 240)" }}
+                        >
+                          दान फॉर्म भरने के बाद यहाँ दिखेगा
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {donations.map((d, idx) => (
                           <div
-                            data-ocid="admin.donations.loading_state"
-                            className="flex items-center justify-center py-10 gap-2 text-saffron-600"
+                            key={`d-${d.name}-${String(d.timestamp)}`}
+                            data-ocid="admin.donations.item.1"
+                            className="rounded-2xl overflow-hidden"
+                            style={{
+                              background: "#fff",
+                              border: "1px solid oklch(0.92 0.03 55)",
+                              boxShadow: "0 2px 8px oklch(0 0 0 / 0.05)",
+                            }}
                           >
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            <span className="hindi-text">लोड हो रहा है...</span>
-                          </div>
-                        ) : donations.length === 0 ? (
-                          <div
-                            data-ocid="admin.donations.empty_state"
-                            className="text-center py-10"
-                          >
-                            <p className="text-4xl mb-2">📭</p>
-                            <p className="hindi-text text-saffron-500">
-                              अभी कोई दान विवरण नहीं है।
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {donations.map((d, idx) => (
-                              <div
-                                key={`d-${d.name}-${String(d.timestamp)}`}
-                                data-ocid="admin.donations.item.1"
-                                className="bg-white rounded-xl p-4 border border-saffron-200 shadow-sm"
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <span className="bg-saffron-100 text-saffron-700 font-bold text-xs px-2 py-0.5 rounded-full">
-                                        #{idx + 1}
-                                      </span>
-                                      <p className="hindi-text font-bold text-saffron-800 text-base">
-                                        {d.name}
-                                      </p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                                      <p className="hindi-text text-saffron-600">
-                                        <span className="font-semibold">
-                                          मोबाइल:
-                                        </span>{" "}
-                                        {d.phone}
-                                      </p>
-                                      <p className="hindi-text text-saffron-600">
-                                        <span className="font-semibold">
-                                          राशि:
-                                        </span>{" "}
-                                        ₹{d.amount}
-                                      </p>
-                                      {d.note && (
-                                        <p className="hindi-text text-saffron-500 col-span-2">
-                                          <span className="font-semibold">
-                                            संदेश:
-                                          </span>{" "}
-                                          {d.note}
-                                        </p>
-                                      )}
-                                      <p className="hindi-text text-saffron-400 text-xs col-span-2">
-                                        {formatTimestamp(d.timestamp)}
-                                      </p>
-                                    </div>
-                                    {d.screenshot && (
-                                      <div className="mt-2">
-                                        <p className="hindi-text text-saffron-600 text-xs font-semibold mb-1">
-                                          भुगतान स्क्रीनशॉट:
-                                        </p>
-                                        <img
-                                          src={d.screenshot}
-                                          alt="Payment screenshot"
-                                          className="max-h-32 rounded-lg border border-saffron-200 object-contain"
-                                        />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    data-ocid={`admin.donations.delete_button.${idx + 1}`}
-                                    onClick={() => handleDeleteDonation(idx)}
-                                    className="text-red-400 hover:text-red-600 transition-colors p-1 flex-shrink-0"
-                                    title="हटाएं"
+                            <div
+                              className="h-1"
+                              style={{
+                                background:
+                                  "linear-gradient(90deg, oklch(0.62 0.18 45), oklch(0.72 0.14 60))",
+                              }}
+                            />
+                            <div className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                    style={{
+                                      background: "oklch(0.95 0.05 55)",
+                                      color: "oklch(0.45 0.14 45)",
+                                    }}
                                   >
-                                    <X className="w-4 h-4" />
-                                  </button>
+                                    #{idx + 1}
+                                  </span>
+                                  <p
+                                    className="hindi-text font-bold"
+                                    style={{ color: "oklch(0.25 0.06 45)" }}
+                                  >
+                                    {d.name}
+                                  </p>
                                 </div>
+                                <button
+                                  type="button"
+                                  data-ocid={`admin.donations.delete_button.${idx + 1}`}
+                                  onClick={() => handleDeleteDonation(idx)}
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
+                                  style={{
+                                    color: "oklch(0.55 0.15 25)",
+                                    background: "oklch(0.97 0.03 25)",
+                                  }}
+                                  title="हटाएं"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
                               </div>
-                            ))}
+                              <div className="space-y-1.5 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="text-xs font-semibold w-16 flex-shrink-0"
+                                    style={{ color: "oklch(0.55 0.06 240)" }}
+                                  >
+                                    मोबाइल
+                                  </span>
+                                  <span
+                                    className="hindi-text"
+                                    style={{ color: "oklch(0.3 0.05 240)" }}
+                                  >
+                                    {d.phone}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="text-xs font-semibold w-16 flex-shrink-0"
+                                    style={{ color: "oklch(0.55 0.06 240)" }}
+                                  >
+                                    राशि
+                                  </span>
+                                  <span
+                                    className="font-bold"
+                                    style={{ color: "oklch(0.45 0.18 145)" }}
+                                  >
+                                    ₹{d.amount}
+                                  </span>
+                                </div>
+                                {d.note && (
+                                  <div className="flex gap-2">
+                                    <span
+                                      className="text-xs font-semibold w-16 flex-shrink-0 pt-0.5"
+                                      style={{ color: "oklch(0.55 0.06 240)" }}
+                                    >
+                                      संदेश
+                                    </span>
+                                    <span
+                                      className="hindi-text text-xs"
+                                      style={{ color: "oklch(0.45 0.04 240)" }}
+                                    >
+                                      {d.note}
+                                    </span>
+                                  </div>
+                                )}
+                                <p
+                                  className="text-xs mt-1"
+                                  style={{ color: "oklch(0.65 0.03 240)" }}
+                                >
+                                  {formatTimestamp(d.timestamp)}
+                                </p>
+                              </div>
+                              {d.screenshot && (
+                                <div
+                                  className="mt-3 pt-3"
+                                  style={{
+                                    borderTop: "1px dashed oklch(0.90 0.04 55)",
+                                  }}
+                                >
+                                  <p
+                                    className="hindi-text text-xs font-semibold mb-1.5"
+                                    style={{ color: "oklch(0.55 0.08 55)" }}
+                                  >
+                                    भुगतान स्क्रीनशॉट
+                                  </p>
+                                  <img
+                                    src={d.screenshot}
+                                    alt="Payment screenshot"
+                                    className="max-h-28 w-full rounded-xl object-contain"
+                                    style={{
+                                      border: "1px solid oklch(0.90 0.04 55)",
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
+                        ))}
                       </div>
                     )}
+                  </div>
+                )}
 
-                    {/* MEMBERS TAB */}
-                    {adminTab === "members" && (
-                      <div>
-                        <p className="hindi-text text-saffron-700 font-semibold mb-4">
-                          कुल आवेदन: {memberApplications.length}
+                {adminTab === "members" && (
+                  <div>
+                    {loadingMembers ? (
+                      <div
+                        data-ocid="admin.members.loading_state"
+                        className="flex items-center justify-center py-20 gap-3"
+                        style={{ color: "oklch(0.62 0.18 45)" }}
+                      >
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="hindi-text font-semibold">
+                          लोड हो रहा है...
+                        </span>
+                      </div>
+                    ) : memberApplications.length === 0 ? (
+                      <div
+                        data-ocid="admin.members.empty_state"
+                        className="flex flex-col items-center justify-center py-24 gap-3"
+                      >
+                        <div
+                          className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl"
+                          style={{ background: "oklch(0.96 0.03 240)" }}
+                        >
+                          👥
+                        </div>
+                        <p
+                          className="hindi-text font-semibold text-lg"
+                          style={{ color: "oklch(0.45 0.06 240)" }}
+                        >
+                          अभी कोई सदस्यता आवेदन नहीं है
                         </p>
-                        {loadingMembers ? (
+                        <p
+                          className="hindi-text text-sm"
+                          style={{ color: "oklch(0.62 0.04 240)" }}
+                        >
+                          सदस्यता फॉर्म भरने के बाद यहाँ दिखेगा
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {memberApplications.map((m, idx) => (
                           <div
-                            data-ocid="admin.members.loading_state"
-                            className="flex items-center justify-center py-10 gap-2 text-saffron-600"
+                            key={String(m.id)}
+                            data-ocid={`admin.members.item.${idx + 1}`}
+                            className="rounded-2xl overflow-hidden"
+                            style={{
+                              background: "#fff",
+                              border: "1px solid oklch(0.92 0.03 240)",
+                              boxShadow: "0 2px 8px oklch(0 0 0 / 0.05)",
+                            }}
                           >
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            <span className="hindi-text">लोड हो रहा है...</span>
-                          </div>
-                        ) : memberApplications.length === 0 ? (
-                          <div
-                            data-ocid="admin.members.empty_state"
-                            className="text-center py-10"
-                          >
-                            <p className="text-4xl mb-2">👥</p>
-                            <p className="hindi-text text-saffron-500">
-                              अभी कोई सदस्यता आवेदन नहीं है।
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            {memberApplications.map((m, idx) => (
-                              <div
-                                key={String(m.id)}
-                                data-ocid={`admin.members.item.${idx + 1}`}
-                                className="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden"
-                              >
-                                <div className="p-4">
-                                  <div className="flex items-start gap-3">
-                                    {/* Photo */}
-                                    <div
-                                      className="w-14 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-orange-200"
-                                      style={{ background: "#f9f0e0" }}
-                                    >
-                                      {m.photo ? (
-                                        <img
-                                          src={m.photo}
-                                          alt=""
-                                          className="w-full h-full object-cover"
-                                        />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-orange-300 text-2xl">
-                                          👤
-                                        </div>
-                                      )}
+                            <div
+                              className="h-1"
+                              style={{
+                                background:
+                                  m.status === "approved"
+                                    ? "linear-gradient(90deg, oklch(0.50 0.14 145), oklch(0.60 0.12 155))"
+                                    : "linear-gradient(90deg, oklch(0.72 0.12 80), oklch(0.78 0.10 90))",
+                              }}
+                            />
+                            <div className="p-4">
+                              <div className="flex items-start gap-3 mb-3">
+                                <div
+                                  className="w-14 h-16 rounded-xl overflow-hidden flex-shrink-0"
+                                  style={{
+                                    border: "2px solid oklch(0.90 0.04 55)",
+                                    background: "oklch(0.96 0.03 55)",
+                                  }}
+                                >
+                                  {m.photo ? (
+                                    <img
+                                      src={m.photo}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-2xl">
+                                      👤
                                     </div>
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                          <span className="bg-orange-100 text-orange-700 font-bold text-xs px-2 py-0.5 rounded-full">
-                                            #{idx + 1}
-                                          </span>
-                                          <p className="hindi-text font-bold text-saffron-800 text-base">
-                                            {m.name}
-                                          </p>
-                                        </div>
-                                        <span
-                                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                            m.status === "approved"
-                                              ? "bg-green-100 text-green-700"
-                                              : "bg-yellow-100 text-yellow-700"
-                                          }`}
-                                        >
-                                          {m.status === "approved"
-                                            ? "✅ स्वीकृत"
-                                            : "⏳ लंबित"}
-                                        </span>
-                                        <span
-                                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                            m.paymentDone
-                                              ? "bg-emerald-100 text-emerald-700"
-                                              : "bg-gray-100 text-gray-500"
-                                          }`}
-                                        >
-                                          {m.paymentDone
-                                            ? "💰 भुगतान हुआ"
-                                            : "भुगतान बाकी"}
-                                        </span>
-                                      </div>
-                                      <div className="grid grid-cols-1 gap-y-1 mt-2 text-sm">
-                                        <p className="hindi-text text-saffron-600">
-                                          <span className="font-semibold">
-                                            मोबाइल:
-                                          </span>{" "}
-                                          {m.phone}
-                                        </p>
-                                        <p className="hindi-text text-saffron-600">
-                                          <span className="font-semibold">
-                                            पता:
-                                          </span>{" "}
-                                          {m.address}
-                                        </p>
-                                        {m.occupation && (
-                                          <p className="hindi-text text-saffron-600">
-                                            <span className="font-semibold">
-                                              दायित्व:
-                                            </span>{" "}
-                                            {m.occupation}
-                                          </p>
-                                        )}
-                                        <p className="hindi-text text-saffron-400 text-xs">
-                                          {formatTimestamp(m.timestamp)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Action buttons */}
-                                  <div className="flex gap-2 mt-3">
-                                    {m.status !== "approved" && (
-                                      <button
-                                        type="button"
-                                        data-ocid={`admin.members.confirm_button.${idx + 1}`}
-                                        onClick={() =>
-                                          handleApproveMember(m.id)
-                                        }
-                                        className="hindi-text flex-1 py-2 rounded-lg font-bold text-sm text-white"
-                                        style={{
-                                          background:
-                                            "linear-gradient(135deg, #16a34a, #15803d)",
-                                        }}
-                                      >
-                                        ✅ स्वीकृत करें
-                                      </button>
-                                    )}
-                                    {m.status === "approved" && (
-                                      <button
-                                        type="button"
-                                        data-ocid={`admin.members.id_card_toggle.${idx + 1}`}
-                                        onClick={() =>
-                                          setExpandedMemberCard(
-                                            expandedMemberCard === idx
-                                              ? null
-                                              : idx,
-                                          )
-                                        }
-                                        className="hindi-text flex-1 py-2 rounded-lg font-bold text-sm text-white flex items-center justify-center gap-1.5"
-                                        style={{
-                                          background:
-                                            "linear-gradient(135deg, #E8520A, #C93D00)",
-                                        }}
-                                      >
-                                        <Download className="w-4 h-4" />
-                                        {expandedMemberCard === idx
-                                          ? "ID Card छुपाएं"
-                                          : "ID Card देखें / डाउनलोड"}
-                                      </button>
-                                    )}
-                                    <button
-                                      type="button"
-                                      data-ocid={`admin.members.delete_button.${idx + 1}`}
-                                      onClick={() => handleDeleteMember(m.id)}
-                                      className="px-3 py-2 rounded-lg text-sm font-bold text-white"
-                                      style={{ background: "#dc2626" }}
-                                    >
-                                      🗑
-                                    </button>
-                                  </div>
+                                  )}
                                 </div>
-
-                                {/* ID Card (expanded when approved) */}
-                                <AnimatePresence>
-                                  {m.status === "approved" &&
-                                    expandedMemberCard === idx && (
-                                      <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="border-t border-orange-200 px-4 py-5 bg-orange-50"
-                                      >
-                                        <p className="hindi-text text-saffron-700 font-bold text-sm text-center mb-3">
-                                          ID Card Preview
-                                        </p>
-                                        <IDCardPreview member={m} />
-                                      </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                    <span
+                                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                      style={{
+                                        background: "oklch(0.95 0.04 240)",
+                                        color: "oklch(0.40 0.10 240)",
+                                      }}
+                                    >
+                                      #{idx + 1}
+                                    </span>
+                                    <span
+                                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                      style={
+                                        m.status === "approved"
+                                          ? {
+                                              background:
+                                                "oklch(0.95 0.06 145)",
+                                              color: "oklch(0.40 0.14 145)",
+                                            }
+                                          : {
+                                              background: "oklch(0.97 0.05 80)",
+                                              color: "oklch(0.50 0.14 80)",
+                                            }
+                                      }
+                                    >
+                                      {m.status === "approved"
+                                        ? "✅ स्वीकृत"
+                                        : "⏳ लंबित"}
+                                    </span>
+                                  </div>
+                                  <p
+                                    className="hindi-text font-bold truncate"
+                                    style={{ color: "oklch(0.25 0.06 45)" }}
+                                  >
+                                    {m.name}
+                                  </p>
+                                  <p
+                                    className="hindi-text text-xs"
+                                    style={{ color: "oklch(0.55 0.06 240)" }}
+                                  >
+                                    {m.phone}
+                                  </p>
+                                </div>
                               </div>
-                            ))}
+
+                              <div
+                                className="space-y-1 text-xs mb-3"
+                                style={{
+                                  borderTop: "1px solid oklch(0.93 0.02 240)",
+                                  paddingTop: "10px",
+                                }}
+                              >
+                                <div className="flex gap-2">
+                                  <span
+                                    className="font-semibold w-14 flex-shrink-0"
+                                    style={{ color: "oklch(0.55 0.06 240)" }}
+                                  >
+                                    पता
+                                  </span>
+                                  <span
+                                    className="hindi-text"
+                                    style={{ color: "oklch(0.35 0.05 240)" }}
+                                  >
+                                    {m.address}
+                                  </span>
+                                </div>
+                                {m.occupation && (
+                                  <div className="flex gap-2">
+                                    <span
+                                      className="font-semibold w-14 flex-shrink-0"
+                                      style={{ color: "oklch(0.55 0.06 240)" }}
+                                    >
+                                      दायित्व
+                                    </span>
+                                    <span
+                                      className="hindi-text"
+                                      style={{ color: "oklch(0.35 0.05 240)" }}
+                                    >
+                                      {m.occupation}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex gap-2">
+                                  <span
+                                    className="font-semibold w-14 flex-shrink-0"
+                                    style={{ color: "oklch(0.55 0.06 240)" }}
+                                  >
+                                    भुगतान
+                                  </span>
+                                  <span
+                                    className="font-bold"
+                                    style={
+                                      m.paymentDone
+                                        ? { color: "oklch(0.45 0.14 145)" }
+                                        : { color: "oklch(0.60 0.06 240)" }
+                                    }
+                                  >
+                                    {m.paymentDone ? "💰 हुआ" : "बाकी"}
+                                  </span>
+                                </div>
+                                <p style={{ color: "oklch(0.70 0.03 240)" }}>
+                                  {formatTimestamp(m.timestamp)}
+                                </p>
+                              </div>
+
+                              <div className="flex gap-2">
+                                {m.status !== "approved" && (
+                                  <button
+                                    type="button"
+                                    data-ocid={`admin.members.confirm_button.${idx + 1}`}
+                                    onClick={() => handleApproveMember(m.id)}
+                                    className="hindi-text flex-1 py-2 rounded-xl font-bold text-xs text-white transition-all hover:opacity-90"
+                                    style={{
+                                      background:
+                                        "linear-gradient(135deg, oklch(0.50 0.16 145), oklch(0.44 0.14 145))",
+                                    }}
+                                  >
+                                    ✅ स्वीकृत करें
+                                  </button>
+                                )}
+                                {m.status === "approved" && (
+                                  <button
+                                    type="button"
+                                    data-ocid={`admin.members.id_card_toggle.${idx + 1}`}
+                                    onClick={() =>
+                                      setExpandedMemberCard(
+                                        expandedMemberCard === idx ? null : idx,
+                                      )
+                                    }
+                                    className="hindi-text flex-1 py-2 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-1.5 transition-all hover:opacity-90"
+                                    style={{
+                                      background:
+                                        "linear-gradient(135deg, oklch(0.62 0.18 45), oklch(0.55 0.16 40))",
+                                    }}
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                    {expandedMemberCard === idx
+                                      ? "छुपाएं"
+                                      : "ID Card"}
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  data-ocid={`admin.members.delete_button.${idx + 1}`}
+                                  onClick={() => handleDeleteMember(m.id)}
+                                  className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all hover:opacity-90"
+                                  style={{
+                                    background: "oklch(0.97 0.03 25)",
+                                    color: "oklch(0.50 0.18 25)",
+                                  }}
+                                >
+                                  🗑
+                                </button>
+                              </div>
+                            </div>
+
+                            <AnimatePresence>
+                              {m.status === "approved" &&
+                                expandedMemberCard === idx && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                    style={{
+                                      borderTop:
+                                        "1px solid oklch(0.92 0.03 55)",
+                                    }}
+                                  >
+                                    <div
+                                      className="px-4 py-5"
+                                      style={{
+                                        background: "oklch(0.99 0.01 80)",
+                                      }}
+                                    >
+                                      <p
+                                        className="hindi-text font-bold text-sm text-center mb-3"
+                                        style={{ color: "oklch(0.45 0.12 45)" }}
+                                      >
+                                        ID Card Preview
+                                      </p>
+                                      <IDCardPreview member={m} />
+                                    </div>
+                                  </motion.div>
+                                )}
+                            </AnimatePresence>
                           </div>
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
