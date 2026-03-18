@@ -459,6 +459,7 @@ export default function App() {
     useState<string>("");
   const [paymentProofSubmitting, setPaymentProofSubmitting] = useState(false);
   const [paymentProofSubmitted, setPaymentProofSubmitted] = useState(false);
+  const [paymentProofError, setPaymentProofError] = useState("");
   const [showMemberIDCard, setShowMemberIDCard] = useState(false);
 
   useEffect(() => {
@@ -681,6 +682,9 @@ export default function App() {
       setPaymentProofSubmitted(true);
     } catch (e) {
       console.error(e);
+      setPaymentProofError(
+        `Submit nahi hua. Dobara try karein ya photo chhoti karein. Error: ${String(e).slice(0, 200)}`,
+      );
     } finally {
       setPaymentProofSubmitting(false);
     }
@@ -1772,7 +1776,10 @@ export default function App() {
                         <button
                           type="button"
                           data-ocid="member_lookup.submit_button"
-                          onClick={handleSubmitPaymentProof}
+                          onClick={() => {
+                            setPaymentProofError("");
+                            handleSubmitPaymentProof();
+                          }}
                           disabled={
                             paymentProofSubmitting || !paymentScreenshotFile
                           }
@@ -1786,6 +1793,13 @@ export default function App() {
                             ? "Submit हो रहा है..."
                             : "📤 Payment Screenshot Submit करें"}
                         </button>
+                        {paymentProofError && (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                            <p className="hindi-text text-red-700 text-sm font-semibold">
+                              ❌ {paymentProofError}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </motion.div>

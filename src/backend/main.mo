@@ -48,14 +48,13 @@ actor {
     timestamp : Time.Time;
   };
 
-  var nextDonationId = 0;
-  let donations = Map.empty<Nat, Donation>();
-  let donationScreenshots = Map.empty<Nat, Text>();
+  stable var nextDonationId : Nat = 0;
+  stable var donations = Map.empty<Nat, Donation>();
+  stable var donationScreenshots = Map.empty<Nat, Text>();
 
-  var nextMemberId = 0;
-  let members = Map.empty<Nat, MemberApplication>();
-  // Separate map for payment screenshots (avoids stable type migration)
-  let memberPaymentScreenshots = Map.empty<Nat, Text>();
+  stable var nextMemberId : Nat = 0;
+  stable var members = Map.empty<Nat, MemberApplication>();
+  stable var memberPaymentScreenshots = Map.empty<Nat, Text>();
 
   public shared ({ caller }) func submitDonation(name : Text, phone : Text, amount : Text, note : Text, screenshot : Text) : async () {
     let donation : Donation = {

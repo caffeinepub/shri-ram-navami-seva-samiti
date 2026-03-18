@@ -50,6 +50,7 @@ export interface _SERVICE {
     [string, string, string, string, string],
     bigint
   >,
+  'submitPaymentProof' : ActorMethod<[bigint, string], boolean>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

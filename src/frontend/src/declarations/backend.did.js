@@ -60,6 +60,11 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
+  'submitPaymentProof' : IDL.Func(
+      [IDL.Nat, IDL.Text],
+      [IDL.Bool],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
@@ -115,6 +120,11 @@ export const idlFactory = ({ IDL }) => {
     'submitMemberApplication' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [IDL.Nat],
+        [],
+      ),
+    'submitPaymentProof' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [IDL.Bool],
         [],
       ),
   });
