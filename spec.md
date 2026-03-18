@@ -1,24 +1,22 @@
 # Shri Ram Navami Seva Samiti
 
 ## Current State
-After admin approval, member sees QR code and a 'मैंने भुगतान कर दिया है' button. Tapping this button directly calls `confirmMemberPayment` on the backend, instantly marking payment as done and unlocking ID card — with no actual verification.
+Backend uses `stable var donations = Map.empty<Nat, Donation>()` and similar for members. The `mo:core/Map` type is not a stable type, so data is lost on every canister upgrade.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Backend: `paymentScreenshot` field to MemberApplication type
-- Backend: `submitPaymentProof(id, screenshot)` public function — members call this to upload their payment screenshot
-- Frontend (member side): Replace the single button with a screenshot upload form; after upload show 'Admin की पुष्टि का इंतज़ार करें' message
-- Frontend (admin panel): Show payment screenshot thumbnail for each approved member; add 'भुगतान पुष्टि करें' button that calls `confirmMemberPayment`
+- Stable arrays for donations and members storage
+- System preupgrade/postupgrade hooks to persist data
 
 ### Modify
-- `confirmMemberPayment` is now only used from admin panel (not directly by member)
-- Member success state only shows after `paymentDone === true` (set by admin)
+- Replace `Map`-based storage with stable arrays (`[var ...]` pattern using `Buffer` rebuilt from stable arrays on init)
+- All CRUD operations updated to work with stable arrays
 
 ### Remove
-- Remove member-side direct payment confirm button (`handleConfirmMemberPayment`)
+- `mo:core/Map` imports and usage
 
 ## Implementation Plan
-1. Update backend: add `paymentScreenshot` field, add `submitPaymentProof` function
-2. Update frontend member lookup section: screenshot upload form, pending verification message
-3. Update admin panel: show payment screenshot, add confirm payment button
+1. Rewrite backend to store donations and members in stable `var` arrays (not HashMap)
+2. All functions (submit, getAll, approve, delete, confirmPayment, submitPaymentProof, getMemberByPhoneAndName) updated accordingly
+3. Data now survives canister upgrades

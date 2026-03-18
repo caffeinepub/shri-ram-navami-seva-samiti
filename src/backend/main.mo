@@ -1,20 +1,14 @@
-import Map "mo:core/Map";
-import Nat "mo:core/Nat";
 import Time "mo:core/Time";
+import Array "mo:core/Array";
+import Nat "mo:core/Nat";
+import Map "mo:core/Map";
 import Text "mo:core/Text";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   public type Donation = {
-    name : Text;
-    phone : Text;
-    amount : Text;
-    note : Text;
-    timestamp : Time.Time;
-  };
-
-  public type DonationWithScreenshot = {
+    id : Nat;
     name : Text;
     phone : Text;
     amount : Text;
@@ -30,76 +24,48 @@ actor {
     address : Text;
     occupation : Text;
     photo : Text;
-    status : Text; // "pending" | "approved"
-    paymentDone : Bool;
-    timestamp : Time.Time;
-  };
-
-  public type MemberApplicationWithProof = {
-    id : Nat;
-    name : Text;
-    phone : Text;
-    address : Text;
-    occupation : Text;
-    photo : Text;
     status : Text;
     paymentDone : Bool;
     paymentScreenshot : Text;
     timestamp : Time.Time;
   };
 
-  stable var nextDonationId : Nat = 0;
-  stable var donations = Map.empty<Nat, Donation>();
-  stable var donationScreenshots = Map.empty<Nat, Text>();
+  var donationsArray : [Donation] = [];
+  var membersArray : [MemberApplication] = [];
+  var nextDonationId = 0;
+  var nextMemberId = 0;
 
-  stable var nextMemberId : Nat = 0;
-  stable var members = Map.empty<Nat, MemberApplication>();
-  stable var memberPaymentScreenshots = Map.empty<Nat, Text>();
+  // ---- Donations ----
 
   public shared ({ caller }) func submitDonation(name : Text, phone : Text, amount : Text, note : Text, screenshot : Text) : async () {
-    let donation : Donation = {
+    let d : Donation = {
+      id = nextDonationId;
       name;
       phone;
       amount;
       note;
+      screenshot;
       timestamp = Time.now();
     };
-    donations.add(nextDonationId, donation);
-    if (screenshot != "") {
-      donationScreenshots.add(nextDonationId, screenshot);
-    };
+    donationsArray := donationsArray.concat([d]);
     nextDonationId += 1;
   };
 
-  public query ({ caller }) func getAllDonations() : async [DonationWithScreenshot] {
-    donations.entries().map(func((id, d) : (Nat, Donation)) : DonationWithScreenshot {
-      let ss = switch (donationScreenshots.get(id)) {
-        case (?s) { s };
-        case null { "" };
-      };
-      {
-        name = d.name;
-        phone = d.phone;
-        amount = d.amount;
-        note = d.note;
-        screenshot = ss;
-        timestamp = d.timestamp;
-      };
-    }).toArray();
+  public query ({ caller }) func getAllDonations() : async [Donation] {
+    donationsArray;
   };
 
   public shared ({ caller }) func clearAllDonations() : async () {
-    donations.clear();
-    donationScreenshots.clear();
+    donationsArray := [];
     nextDonationId := 0;
   };
 
   public shared ({ caller }) func deleteDonationById(id : Nat) : async () {
-    ignore donations.remove(id);
-    ignore donationScreenshots.remove(id);
+    donationsArray := donationsArray.filter(func(d) { d.id != id });
   };
 
-  // Membership functions
+  // ---- Membership ----
+
   public shared ({ caller }) func submitMemberApplication(name : Text, phone : Text, address : Text, occupation : Text, photo : Text) : async Nat {
     let id = nextMemberId;
     let app : MemberApplication = {
@@ -111,124 +77,60 @@ actor {
       photo;
       status = "pending";
       paymentDone = false;
+      paymentScreenshot = "";
       timestamp = Time.now();
     };
-    members.add(id, app);
+    membersArray := membersArray.concat([app]);
     nextMemberId += 1;
     id;
   };
 
-  public query ({ caller }) func getAllMemberApplications() : async [MemberApplicationWithProof] {
-    members.values().map(func(app : MemberApplication) : MemberApplicationWithProof {
-      let ps = switch (memberPaymentScreenshots.get(app.id)) {
-        case (?s) { s };
-        case null { "" };
-      };
-      {
-        id = app.id;
-        name = app.name;
-        phone = app.phone;
-        address = app.address;
-        occupation = app.occupation;
-        photo = app.photo;
-        status = app.status;
-        paymentDone = app.paymentDone;
-        paymentScreenshot = ps;
-        timestamp = app.timestamp;
-      };
-    }).toArray();
+  public query ({ caller }) func getAllMemberApplications() : async [MemberApplication] {
+    membersArray;
   };
 
   public shared ({ caller }) func approveMemberApplication(id : Nat) : async () {
-    switch (members.get(id)) {
-      case (?app) {
-        let updated : MemberApplication = {
-          id = app.id;
-          name = app.name;
-          phone = app.phone;
-          address = app.address;
-          occupation = app.occupation;
-          photo = app.photo;
-          status = "approved";
-          paymentDone = app.paymentDone;
-          timestamp = app.timestamp;
-        };
-        members.add(id, updated);
-      };
-      case null {};
-    };
+    membersArray := membersArray.map(func(app) {
+      if (app.id == id) {
+        { app with status = "approved" };
+      } else { app };
+    });
   };
 
   public shared ({ caller }) func deleteMemberApplication(id : Nat) : async () {
-    ignore members.remove(id);
-    ignore memberPaymentScreenshots.remove(id);
+    membersArray := membersArray.filter(func(app) { app.id != id });
   };
 
-  // Public: find member by phone and name (case-insensitive trim)
-  public query func getMemberByPhoneAndName(phone : Text, name : Text) : async ?MemberApplicationWithProof {
+  public query ({ caller }) func getMemberByPhoneAndName(phone : Text, name : Text) : async ?MemberApplication {
     let phoneTrim = phone.trim(#char ' ');
     let nameTrim = name.trim(#char ' ');
-    for ((_, app) in members.entries()) {
-      let phoneMatch = app.phone.trim(#char ' ') == phoneTrim;
-      let nameMatch = app.name.trim(#char ' ') == nameTrim;
-      if (phoneMatch and nameMatch) {
-        let ps = switch (memberPaymentScreenshots.get(app.id)) {
-          case (?s) { s };
-          case null { "" };
-        };
-        return ?{
-          id = app.id;
-          name = app.name;
-          phone = app.phone;
-          address = app.address;
-          occupation = app.occupation;
-          photo = app.photo;
-          status = app.status;
-          paymentDone = app.paymentDone;
-          paymentScreenshot = ps;
-          timestamp = app.timestamp;
-        };
-      };
-    };
-    null;
+    let found = membersArray.find(
+      func(app) {
+        app.phone.trim(#char ' ') == phoneTrim and app.name.trim(#char ' ') == nameTrim
+      }
+    );
+    found;
   };
 
-  // Public: member submits payment screenshot proof
-  public shared func submitPaymentProof(id : Nat, screenshot : Text) : async Bool {
-    switch (members.get(id)) {
-      case (?app) {
-        if (app.status == "approved" and not app.paymentDone) {
-          memberPaymentScreenshots.add(id, screenshot);
-          return true;
-        };
-        return false;
-      };
-      case null { return false };
-    };
+  public shared ({ caller }) func submitPaymentProof(id : Nat, screenshot : Text) : async Bool {
+    var found = false;
+    membersArray := membersArray.map(func(app) {
+      if (app.id == id and app.status == "approved" and not app.paymentDone) {
+        found := true;
+        { app with paymentScreenshot = screenshot };
+      } else { app };
+    });
+    found;
   };
 
-  // Admin only: confirm payment after verifying screenshot
-  public shared func confirmMemberPayment(id : Nat) : async Bool {
-    switch (members.get(id)) {
-      case (?app) {
-        if (app.status == "approved") {
-          let updated : MemberApplication = {
-            id = app.id;
-            name = app.name;
-            phone = app.phone;
-            address = app.address;
-            occupation = app.occupation;
-            photo = app.photo;
-            status = app.status;
-            paymentDone = true;
-            timestamp = app.timestamp;
-          };
-          members.add(id, updated);
-          return true;
-        };
-        return false;
-      };
-      case null { return false };
-    };
+  public shared ({ caller }) func confirmMemberPayment(id : Nat) : async Bool {
+    var found = false;
+    membersArray := membersArray.map(func(app) {
+      if (app.id == id and app.status == "approved") {
+        found := true;
+        { app with paymentDone = true };
+      } else { app };
+    });
+    found;
   };
 };

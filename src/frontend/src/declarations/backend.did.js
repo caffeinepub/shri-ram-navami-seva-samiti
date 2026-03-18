@@ -9,7 +9,8 @@
 import { IDL } from '@icp-sdk/core/candid';
 
 export const Time = IDL.Int;
-export const DonationWithScreenshot = IDL.Record({
+export const Donation = IDL.Record({
+  'id' : IDL.Nat,
   'name' : IDL.Text,
   'note' : IDL.Text,
   'timestamp' : Time,
@@ -21,6 +22,7 @@ export const MemberApplication = IDL.Record({
   'id' : IDL.Nat,
   'occupation' : IDL.Text,
   'status' : IDL.Text,
+  'paymentScreenshot' : IDL.Text,
   'name' : IDL.Text,
   'address' : IDL.Text,
   'timestamp' : Time,
@@ -35,11 +37,7 @@ export const idlService = IDL.Service({
   'confirmMemberPayment' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
   'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
-  'getAllDonations' : IDL.Func(
-      [],
-      [IDL.Vec(DonationWithScreenshot)],
-      ['query'],
-    ),
+  'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
   'getAllMemberApplications' : IDL.Func(
       [],
       [IDL.Vec(MemberApplication)],
@@ -60,18 +58,15 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
-  'submitPaymentProof' : IDL.Func(
-      [IDL.Nat, IDL.Text],
-      [IDL.Bool],
-      [],
-    ),
+  'submitPaymentProof' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
   const Time = IDL.Int;
-  const DonationWithScreenshot = IDL.Record({
+  const Donation = IDL.Record({
+    'id' : IDL.Nat,
     'name' : IDL.Text,
     'note' : IDL.Text,
     'timestamp' : Time,
@@ -83,6 +78,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'occupation' : IDL.Text,
     'status' : IDL.Text,
+    'paymentScreenshot' : IDL.Text,
     'name' : IDL.Text,
     'address' : IDL.Text,
     'timestamp' : Time,
@@ -97,11 +93,7 @@ export const idlFactory = ({ IDL }) => {
     'confirmMemberPayment' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'deleteDonationById' : IDL.Func([IDL.Nat], [], []),
     'deleteMemberApplication' : IDL.Func([IDL.Nat], [], []),
-    'getAllDonations' : IDL.Func(
-        [],
-        [IDL.Vec(DonationWithScreenshot)],
-        ['query'],
-      ),
+    'getAllDonations' : IDL.Func([], [IDL.Vec(Donation)], ['query']),
     'getAllMemberApplications' : IDL.Func(
         [],
         [IDL.Vec(MemberApplication)],
@@ -122,11 +114,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Nat],
         [],
       ),
-    'submitPaymentProof' : IDL.Func(
-        [IDL.Nat, IDL.Text],
-        [IDL.Bool],
-        [],
-      ),
+    'submitPaymentProof' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
   });
 };
 

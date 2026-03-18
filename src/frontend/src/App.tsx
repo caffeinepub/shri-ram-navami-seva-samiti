@@ -687,6 +687,19 @@ export default function App() {
     }
   };
 
+  const handleRefreshMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      if (!actor) throw new Error("Not ready");
+      const mdata = await actor.getAllMemberApplications();
+      setMemberApplications(mdata as MemberApplication[]);
+    } catch {
+      /* ignore */
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
   const handleAdminConfirmPayment = async (id: bigint) => {
     try {
       if (!actor) throw new Error("Not ready");
@@ -2709,6 +2722,22 @@ export default function App() {
                       सदस्य ({memberApplications.length})
                     </button>
                   </div>
+                  {adminTab === "members" && (
+                    <button
+                      type="button"
+                      data-ocid="admin.members.refresh_button"
+                      disabled={loadingMembers}
+                      onClick={handleRefreshMembers}
+                      className="hindi-text text-xs font-bold px-4 py-2 rounded-xl transition-all disabled:opacity-40 flex items-center gap-1.5"
+                      style={{
+                        background: "oklch(0.95 0.06 220)",
+                        color: "oklch(0.35 0.12 220)",
+                        border: "1.5px solid oklch(0.85 0.08 220)",
+                      }}
+                    >
+                      {loadingMembers ? "लोड हो रहा है..." : "🔄 Refresh"}
+                    </button>
+                  )}
                   {adminTab === "donations" && (
                     <button
                       type="button"

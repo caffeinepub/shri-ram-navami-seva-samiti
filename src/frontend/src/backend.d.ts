@@ -7,7 +7,8 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface DonationWithScreenshot {
+export interface Donation {
+    id: bigint;
     name: string;
     note: string;
     timestamp: Time;
@@ -20,6 +21,7 @@ export interface MemberApplication {
     id: bigint;
     occupation: string;
     status: string;
+    paymentScreenshot: string;
     name: string;
     address: string;
     timestamp: Time;
@@ -33,9 +35,10 @@ export interface backendInterface {
     confirmMemberPayment(id: bigint): Promise<boolean>;
     deleteDonationById(id: bigint): Promise<void>;
     deleteMemberApplication(id: bigint): Promise<void>;
-    getAllDonations(): Promise<Array<DonationWithScreenshot>>;
+    getAllDonations(): Promise<Array<Donation>>;
     getAllMemberApplications(): Promise<Array<MemberApplication>>;
     getMemberByPhoneAndName(phone: string, name: string): Promise<MemberApplication | null>;
     submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
     submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
+    submitPaymentProof(id: bigint, screenshot: string): Promise<boolean>;
 }

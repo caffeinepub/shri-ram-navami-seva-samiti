@@ -10,7 +10,8 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface DonationWithScreenshot {
+export interface Donation {
+  'id' : bigint,
   'name' : string,
   'note' : string,
   'timestamp' : Time,
@@ -22,6 +23,7 @@ export interface MemberApplication {
   'id' : bigint,
   'occupation' : string,
   'status' : string,
+  'paymentScreenshot' : string,
   'name' : string,
   'address' : string,
   'timestamp' : Time,
@@ -36,7 +38,7 @@ export interface _SERVICE {
   'confirmMemberPayment' : ActorMethod<[bigint], boolean>,
   'deleteDonationById' : ActorMethod<[bigint], undefined>,
   'deleteMemberApplication' : ActorMethod<[bigint], undefined>,
-  'getAllDonations' : ActorMethod<[], Array<DonationWithScreenshot>>,
+  'getAllDonations' : ActorMethod<[], Array<Donation>>,
   'getAllMemberApplications' : ActorMethod<[], Array<MemberApplication>>,
   'getMemberByPhoneAndName' : ActorMethod<
     [string, string],
