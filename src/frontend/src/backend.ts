@@ -120,6 +120,7 @@ export interface backendInterface {
     getMemberByPhoneAndName(phone: string, name: string): Promise<MemberApplication | null>;
     submitDonation(name: string, phone: string, amount: string, note: string, screenshot: string): Promise<void>;
     submitMemberApplication(name: string, phone: string, address: string, occupation: string, photo: string): Promise<bigint>;
+    submitPaymentProof(id: bigint, screenshot: string): Promise<boolean>;
 }
 import type { MemberApplication as _MemberApplication } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -261,6 +262,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.submitMemberApplication(arg0, arg1, arg2, arg3, arg4);
+            return result;
+        }
+    }
+    async submitPaymentProof(arg0: bigint, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitPaymentProof(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitPaymentProof(arg0, arg1);
             return result;
         }
     }

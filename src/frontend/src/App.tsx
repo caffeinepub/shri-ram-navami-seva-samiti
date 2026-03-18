@@ -675,10 +675,7 @@ export default function App() {
     try {
       if (!actor) throw new Error("Not ready");
       const compressed = await ensureSizeLimit(paymentScreenshotFile, 300_000);
-      await (actor as any).submitPaymentProof(
-        memberLookupResult.id,
-        compressed,
-      );
+      await actor.submitPaymentProof(memberLookupResult.id, compressed);
       setPaymentProofSubmitted(true);
     } catch (e) {
       console.error(e);
@@ -693,7 +690,7 @@ export default function App() {
   const handleAdminConfirmPayment = async (id: bigint) => {
     try {
       if (!actor) throw new Error("Not ready");
-      await (actor as any).confirmMemberPayment(id);
+      await actor.confirmMemberPayment(id);
       setMemberApplications((prev) =>
         prev.map((m) => (m.id === id ? { ...m, paymentDone: true } : m)),
       );
