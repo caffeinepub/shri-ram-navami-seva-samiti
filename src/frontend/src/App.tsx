@@ -1,8 +1,10 @@
 import {
   Download,
   Heart,
+  IndianRupee,
   Loader2,
   Lock,
+  Phone,
   Shield,
   User,
   Users,
@@ -848,6 +850,26 @@ export default function App() {
               🕉️
             </motion.div>
 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35, duration: 0.6 }}
+              className="flex justify-center mb-4"
+            >
+              <span
+                className="hindi-text text-sm font-bold px-5 py-2 rounded-full"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(212,160,23,0.85), rgba(255,153,0,0.75))",
+                  color: "#1a0a00",
+                  boxShadow: "0 2px 16px rgba(212,160,23,0.4)",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                🔴 19–27 मार्च 2026 • उसरी
+              </span>
+            </motion.div>
+
             <motion.p
               initial={{ opacity: 0, letterSpacing: "0.3em" }}
               animate={{ opacity: 1, letterSpacing: "0.15em" }}
@@ -908,7 +930,7 @@ export default function App() {
                   onClick={() => scrollTo("events")}
                   className="btn-saffron hindi-text px-8 py-3.5 rounded-full font-bold text-lg shadow-saffron-lg"
                 >
-                  🎉 कार्यक्रम देखें
+                  🔴 अभी चल रहा है
                 </button>
                 <button
                   type="button"
@@ -1014,6 +1036,34 @@ export default function App() {
                 आपकी सेवा, हमारी भक्ति।
               </p>
             </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-6 max-w-2xl mx-auto"
+            >
+              <div
+                className="rounded-2xl px-8 py-5 text-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(212,160,23,0.18), rgba(255,153,0,0.1))",
+                  border: "2px solid rgba(212,160,23,0.4)",
+                  boxShadow: "0 4px 20px rgba(212,160,23,0.15)",
+                }}
+              >
+                <p className="hindi-text text-4xl font-bold text-saffron-700 mb-1">
+                  14वाँ
+                </p>
+                <p className="hindi-text text-saffron-600 text-lg font-semibold">
+                  भव्य आयोजन — वर्ष 2026
+                </p>
+                <p className="hindi-text text-saffron-500 text-sm mt-1">
+                  स्थापना 2012 से निरंतर
+                </p>
+              </div>
+            </motion.div>
           </div>
         </section>
 
@@ -1028,11 +1078,23 @@ export default function App() {
               className="text-center mb-12"
             >
               <p className="text-saffron-400 hindi-text text-sm tracking-widest uppercase mb-2">
-                🎉 आगामी कार्यक्रम 🎉
+                🔴 अभी चल रहा है • 19 से 27 मार्च 2026
               </p>
               <h2 className="hindi-text text-3xl md:text-4xl font-bold text-saffron-300 mb-3">
-                आगामी कार्यक्रम
+                श्री राम जन्मोत्सव समारोह
               </h2>
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <span
+                  className="flex items-center gap-1.5 bg-red-600/90 text-white text-xs font-bold px-3 py-1 rounded-full hindi-text tracking-wide shadow-lg"
+                  style={{ animation: "pulse 2s infinite" }}
+                >
+                  <span
+                    className="w-2 h-2 bg-white rounded-full inline-block"
+                    style={{ animation: "ping 1s infinite" }}
+                  />
+                  लाइव
+                </span>
+              </div>
               <div className="divider-om">
                 <span className="text-saffron-500">✦ श्री राम जन्मोत्सव ✦</span>
               </div>
@@ -1069,6 +1131,11 @@ export default function App() {
                 className="bg-white/5 backdrop-blur-sm border border-saffron-600/40 rounded-2xl p-8"
                 style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}
               >
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="hindi-text text-xs font-semibold bg-saffron-900/60 text-saffron-300 border border-saffron-600/40 rounded-full px-4 py-1.5">
+                    📅 19 मार्च से 27 मार्च 2026
+                  </span>
+                </div>
                 <h3 className="hindi-text text-2xl md:text-3xl font-bold text-saffron-300 text-center mb-2">
                   श्री राम जन्मोत्सव समारोह
                 </h3>
@@ -1152,6 +1219,86 @@ export default function App() {
                 <p className="hindi-text text-saffron-400 text-center text-sm mt-2">
                   सभी भक्तजन सादर आमंत्रित हैं
                 </p>
+              </div>
+            </motion.div>
+
+            {/* Katha Vachak Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="max-w-2xl mx-auto mt-8"
+            >
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  padding: "3px",
+                  background:
+                    "linear-gradient(135deg, #d4a017, #f5c518, #b8860b, #f5c518, #d4a017)",
+                  boxShadow:
+                    "0 0 40px rgba(212,160,23,0.35), 0 8px 32px rgba(0,0,0,0.5)",
+                }}
+              >
+                <div
+                  className="rounded-xl p-8 text-center"
+                  style={{
+                    background:
+                      "linear-gradient(160deg, #1a0a00 0%, #2d1200 40%, #1a0800 100%)",
+                  }}
+                >
+                  <p className="hindi-text text-saffron-400 text-xs font-bold tracking-[0.2em] uppercase mb-4">
+                    ✦ विशेष आमंत्रित ✦
+                  </p>
+                  <div className="flex justify-center mb-5">
+                    <div className="relative">
+                      <div
+                        className="w-32 h-32 rounded-full overflow-hidden"
+                        style={{
+                          border: "4px solid #f5c518",
+                          boxShadow:
+                            "0 0 0 3px rgba(245,197,24,0.3), 0 0 30px rgba(212,160,23,0.5)",
+                        }}
+                      >
+                        <img
+                          src="/assets/uploads/335601405_1922359371435088_7773286694791031155_n-1.jpg"
+                          alt="कथा वाचक"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div
+                        className="absolute -inset-2 rounded-full border-2 border-dashed border-saffron-500/60"
+                        style={{
+                          animationDuration: "12s",
+                          animation: "spin 12s linear infinite",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <h3 className="hindi-text text-2xl font-bold text-saffron-200 mb-1">
+                    डॉ. लवी मैत्रेयी जी
+                  </h3>
+                  <p className="hindi-text text-saffron-400 text-sm font-semibold mb-1">
+                    श्रीधाम वृन्दावन
+                  </p>
+                  <p className="hindi-text text-saffron-300 text-xs tracking-widest uppercase mb-4 font-bold">
+                    कथा वाचक
+                  </p>
+                  <div
+                    className="rounded-xl px-5 py-4"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(212,160,23,0.12), rgba(255,153,0,0.08))",
+                      border: "1px solid rgba(212,160,23,0.3)",
+                    }}
+                  >
+                    <p className="hindi-text text-saffron-300 text-sm leading-relaxed">
+                      संगीतमय श्री राम कथा का मधुर वर्णन एवं भक्तों को राम भक्ति से
+                      ओतप्रोत करने वाली प्रेरणादायी कथा
+                    </p>
+                  </div>
+                  <div className="lotus-divider mt-5 mb-0">🪷 🕉️ 🪷</div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -1247,258 +1394,279 @@ export default function App() {
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
                 <div
-                  className="rounded-2xl p-6 md:p-8 text-left"
+                  className="rounded-2xl overflow-hidden text-left"
                   style={{
-                    background:
-                      "linear-gradient(135deg, oklch(0.94 0.05 78), oklch(0.97 0.03 85))",
-                    border: "2px solid oklch(0.75 0.14 58)",
-                    boxShadow: "0 6px 32px oklch(0.62 0.18 50 / 0.15)",
+                    background: "linear-gradient(135deg, #fff8e8, #fff3d0)",
+                    border: "2px solid #E8A020",
+                    boxShadow: "0 10px 40px oklch(0.62 0.18 50 / 0.2)",
                   }}
                 >
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-3xl">📝</span>
+                  {/* Donation Form Header */}
+                  <div
+                    className="flex items-center gap-3 px-6 py-4"
+                    style={{
+                      background: "linear-gradient(135deg, #E8520A, #C93D00)",
+                    }}
+                  >
+                    <IndianRupee className="w-6 h-6 text-white flex-shrink-0" />
                     <div>
-                      <h3 className="hindi-text text-xl md:text-2xl font-bold text-saffron-800">
-                        अपना दान विवरण भरें
+                      <h3 className="hindi-text text-white font-bold text-xl">
+                        दान विवरण भरें
                       </h3>
-                      <p className="hindi-text text-saffron-600 text-sm mt-0.5">
+                      <p className="hindi-text text-orange-100 text-xs">
                         भुगतान के बाद नीचे विवरण भरकर सबमिट करें
                       </p>
                     </div>
                   </div>
-
-                  <AnimatePresence mode="wait">
-                    {submitted && submittedData ? (
-                      <motion.div
-                        key="success"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.4 }}
-                        data-ocid="donation.success_state"
-                        className="rounded-xl p-6 text-center"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, oklch(0.92 0.08 130 / 0.3), oklch(0.95 0.05 140 / 0.3))",
-                          border: "2px solid oklch(0.62 0.18 140)",
-                        }}
-                      >
-                        <div className="text-5xl mb-3">🙏</div>
-                        <h4 className="hindi-text text-xl font-bold text-green-700 mb-2">
-                          धन्यवाद! आपका दान विवरण सफलतापूर्वक सबमिट हो गया 🙏
-                        </h4>
-                        <p className="hindi-text text-saffron-700 text-sm mb-5">
-                          प्रभु राम आपका कल्याण करें।
-                        </p>
-                        <div
-                          className="rounded-xl p-4 text-left space-y-2 mb-5"
+                  <div className="p-6 md:p-8">
+                    <AnimatePresence mode="wait">
+                      {submitted && submittedData ? (
+                        <motion.div
+                          key="success"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.4 }}
+                          data-ocid="donation.success_state"
+                          className="rounded-xl p-6 text-center"
                           style={{
-                            background: "oklch(0.97 0.02 85)",
-                            border: "1px solid oklch(0.82 0.10 60)",
+                            background:
+                              "linear-gradient(135deg, oklch(0.92 0.08 130 / 0.3), oklch(0.95 0.05 140 / 0.3))",
+                            border: "2px solid oklch(0.62 0.18 140)",
                           }}
                         >
-                          <p className="hindi-text text-saffron-700 text-sm">
-                            <span className="font-semibold">नाम:</span>{" "}
-                            {submittedData.name}
+                          <div className="text-5xl mb-3">🙏</div>
+                          <h4 className="hindi-text text-xl font-bold text-green-700 mb-2">
+                            धन्यवाद! आपका दान विवरण सफलतापूर्वक सबमिट हो गया 🙏
+                          </h4>
+                          <p className="hindi-text text-saffron-700 text-sm mb-5">
+                            प्रभु राम आपका कल्याण करें।
                           </p>
-                          <p className="hindi-text text-saffron-700 text-sm">
-                            <span className="font-semibold">मोबाइल:</span>{" "}
-                            {submittedData.phone}
-                          </p>
-                          <p className="hindi-text text-saffron-700 text-sm">
-                            <span className="font-semibold">दान राशि:</span> ₹
-                            {submittedData.amount}
-                          </p>
-                          {submittedData.note && (
-                            <p className="hindi-text text-saffron-700 text-sm">
-                              <span className="font-semibold">संदेश:</span>{" "}
-                              {submittedData.note}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setSubmitted(false)}
-                          className="btn-saffron hindi-text px-6 py-2 rounded-full text-sm font-medium"
-                        >
-                          और दान विवरण भरें
-                        </button>
-                      </motion.div>
-                    ) : (
-                      <motion.form
-                        key="form"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onSubmit={handleDonationSubmit}
-                        className="space-y-5"
-                      >
-                        <div>
-                          <label
-                            htmlFor="donor-name"
-                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
-                          >
-                            नाम <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            id="donor-name"
-                            type="text"
-                            required
-                            value={donorName}
-                            onChange={(e) => setDonorName(e.target.value)}
-                            placeholder="अपना नाम लिखें"
-                            data-ocid="donation.input"
-                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="donor-phone"
-                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
-                          >
-                            मोबाइल नंबर <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            id="donor-phone"
-                            type="tel"
-                            required
-                            value={donorPhone}
-                            onChange={(e) => setDonorPhone(e.target.value)}
-                            placeholder="10 अंकों का मोबाइल नंबर"
-                            data-ocid="donation.input"
-                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="donor-amount"
-                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
-                          >
-                            दान राशि (₹) <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            id="donor-amount"
-                            type="text"
-                            required
-                            value={donorAmount}
-                            onChange={(e) => setDonorAmount(e.target.value)}
-                            placeholder="जितना दान दिया, वह राशि"
-                            data-ocid="donation.input"
-                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="donor-note"
-                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
-                          >
-                            संदेश{" "}
-                            <span className="text-saffron-400 font-normal text-xs">
-                              (वैकल्पिक)
-                            </span>
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={donorNote}
-                            onChange={(e) => setDonorNote(e.target.value)}
-                            placeholder="कोई संदेश..."
-                            id="donor-note"
-                            data-ocid="donation.textarea"
-                            className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-300/50 transition-all text-base resize-none"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="donor-screenshot"
-                            className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
-                          >
-                            भुगतान स्क्रीनशॉट{" "}
-                            <span className="text-saffron-400 font-normal text-xs">
-                              (वैकल्पिक)
-                            </span>
-                          </label>
-                          <label
-                            htmlFor="donor-screenshot"
-                            data-ocid="donation.upload_button"
-                            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-saffron-300 rounded-xl cursor-pointer bg-white hover:bg-saffron-50 transition-colors"
-                          >
-                            {screenshotPreview ? (
-                              <img
-                                src={screenshotPreview}
-                                alt="Screenshot preview"
-                                className="h-full w-full object-contain rounded-xl"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center gap-1 text-saffron-500">
-                                <span className="text-3xl">📷</span>
-                                <span className="hindi-text text-sm">
-                                  स्क्रीनशॉट अपलोड करें
-                                </span>
-                                <span className="text-xs text-saffron-400">
-                                  JPG, PNG
-                                </span>
-                              </div>
-                            )}
-                            <input
-                              id="donor-screenshot"
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0] ?? null;
-                                setScreenshotFile(file);
-                                if (file) {
-                                  compressImageToBase64(file, 600, 0.6)
-                                    .then(setScreenshotPreview)
-                                    .catch(() => setScreenshotPreview(null));
-                                } else {
-                                  setScreenshotPreview(null);
-                                }
-                              }}
-                            />
-                          </label>
-                          {screenshotPreview && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setScreenshotFile(null);
-                                setScreenshotPreview(null);
-                              }}
-                              className="hindi-text text-xs text-red-500 mt-1 hover:underline"
-                            >
-                              हटाएं
-                            </button>
-                          )}
-                        </div>
-                        {submitError && (
                           <div
-                            data-ocid="donation.error_state"
-                            className="hindi-text text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm"
+                            className="rounded-xl p-4 text-left space-y-2 mb-5"
+                            style={{
+                              background: "oklch(0.97 0.02 85)",
+                              border: "1px solid oklch(0.82 0.10 60)",
+                            }}
                           >
-                            {submitError}
+                            <p className="hindi-text text-saffron-700 text-sm">
+                              <span className="font-semibold">नाम:</span>{" "}
+                              {submittedData.name}
+                            </p>
+                            <p className="hindi-text text-saffron-700 text-sm">
+                              <span className="font-semibold">मोबाइल:</span>{" "}
+                              {submittedData.phone}
+                            </p>
+                            <p className="hindi-text text-saffron-700 text-sm">
+                              <span className="font-semibold">दान राशि:</span> ₹
+                              {submittedData.amount}
+                            </p>
+                            {submittedData.note && (
+                              <p className="hindi-text text-saffron-700 text-sm">
+                                <span className="font-semibold">संदेश:</span>{" "}
+                                {submittedData.note}
+                              </p>
+                            )}
                           </div>
-                        )}
-                        <button
-                          type="submit"
-                          disabled={submitting}
-                          data-ocid="donation.submit_button"
-                          className="btn-saffron hindi-text w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                          <button
+                            type="button"
+                            onClick={() => setSubmitted(false)}
+                            className="btn-saffron hindi-text px-6 py-2 rounded-full text-sm font-medium"
+                          >
+                            और दान विवरण भरें
+                          </button>
+                        </motion.div>
+                      ) : (
+                        <motion.form
+                          key="form"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          onSubmit={handleDonationSubmit}
+                          className="space-y-5"
                         >
-                          {submitting ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              <span>सबमिट हो रहा है...</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>🙏</span>
-                              <span>विवरण सबमिट करें</span>
-                            </>
+                          <div>
+                            <label
+                              htmlFor="donor-name"
+                              className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                            >
+                              नाम <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-saffron-400 pointer-events-none" />
+                              <input
+                                id="donor-name"
+                                type="text"
+                                required
+                                value={donorName}
+                                onChange={(e) => setDonorName(e.target.value)}
+                                placeholder="अपना नाम लिखें"
+                                data-ocid="donation.input"
+                                className="hindi-text w-full pl-10 pr-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="donor-phone"
+                              className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                            >
+                              मोबाइल नंबर <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-saffron-400 pointer-events-none" />
+                              <input
+                                id="donor-phone"
+                                type="tel"
+                                required
+                                value={donorPhone}
+                                onChange={(e) => setDonorPhone(e.target.value)}
+                                placeholder="10 अंकों का मोबाइल नंबर"
+                                data-ocid="donation.input"
+                                className="hindi-text w-full pl-10 pr-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="donor-amount"
+                              className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                            >
+                              दान राशि (₹){" "}
+                              <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-saffron-400 pointer-events-none" />
+                              <input
+                                id="donor-amount"
+                                type="text"
+                                required
+                                value={donorAmount}
+                                onChange={(e) => setDonorAmount(e.target.value)}
+                                placeholder="जितना दान दिया, वह राशि"
+                                data-ocid="donation.input"
+                                className="hindi-text w-full pl-10 pr-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="donor-note"
+                              className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                            >
+                              संदेश{" "}
+                              <span className="text-saffron-400 font-normal text-xs">
+                                (वैकल्पिक)
+                              </span>
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={donorNote}
+                              onChange={(e) => setDonorNote(e.target.value)}
+                              placeholder="कोई संदेश..."
+                              id="donor-note"
+                              data-ocid="donation.textarea"
+                              className="hindi-text w-full px-4 py-3 rounded-xl border-2 border-saffron-300 bg-white text-saffron-900 placeholder:text-saffron-400 focus:border-orange-400 focus:outline-none transition-all text-base resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="donor-screenshot"
+                              className="hindi-text text-saffron-800 font-semibold text-sm block mb-1.5"
+                            >
+                              भुगतान स्क्रीनशॉट{" "}
+                              <span className="text-saffron-400 font-normal text-xs">
+                                (वैकल्पिक)
+                              </span>
+                            </label>
+                            <label
+                              htmlFor="donor-screenshot"
+                              data-ocid="donation.upload_button"
+                              className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-orange-300 rounded-xl cursor-pointer bg-white hover:bg-orange-50 transition-colors overflow-hidden"
+                            >
+                              {screenshotPreview ? (
+                                <img
+                                  src={screenshotPreview}
+                                  alt="Screenshot preview"
+                                  className="h-full w-full object-contain rounded-xl"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center gap-1 text-saffron-500">
+                                  <span className="text-3xl">📷</span>
+                                  <span className="hindi-text text-sm">
+                                    स्क्रीनशॉट अपलोड करें
+                                  </span>
+                                  <span className="text-xs text-saffron-400">
+                                    JPG, PNG
+                                  </span>
+                                </div>
+                              )}
+                              <input
+                                id="donor-screenshot"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0] ?? null;
+                                  setScreenshotFile(file);
+                                  if (file) {
+                                    compressImageToBase64(file, 600, 0.6)
+                                      .then(setScreenshotPreview)
+                                      .catch(() => setScreenshotPreview(null));
+                                  } else {
+                                    setScreenshotPreview(null);
+                                  }
+                                }}
+                              />
+                            </label>
+                            {screenshotPreview && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setScreenshotFile(null);
+                                  setScreenshotPreview(null);
+                                }}
+                                className="hindi-text text-xs text-red-500 mt-1 hover:underline"
+                              >
+                                हटाएं
+                              </button>
+                            )}
+                          </div>
+                          {submitError && (
+                            <div
+                              data-ocid="donation.error_state"
+                              className="hindi-text text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm"
+                            >
+                              {submitError}
+                            </div>
                           )}
-                        </button>
-                      </motion.form>
-                    )}
-                  </AnimatePresence>
+                          <button
+                            type="submit"
+                            disabled={submitting}
+                            data-ocid="donation.submit_button"
+                            className="hindi-text w-full py-4 rounded-xl font-bold text-lg text-white flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #E8520A, #C93D00)",
+                            }}
+                          >
+                            {submitting ? (
+                              <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>सबमिट हो रहा है...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>🙏</span>
+                                <span>विवरण सबमिट करें</span>
+                              </>
+                            )}
+                          </button>
+                        </motion.form>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  {/* end p-6 inner padding */}
                 </div>
               </motion.div>
 
@@ -1537,18 +1705,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Admin Button */}
-              <div className="mt-6">
-                <button
-                  type="button"
-                  data-ocid="admin.open_modal_button"
-                  onClick={() => setAdminOpen(true)}
-                  className="text-saffron-400/70 text-xs hover:text-saffron-500 transition-colors flex items-center gap-1.5 mx-auto"
-                >
-                  <Lock className="w-3 h-3" />
-                  <span>Admin</span>
-                </button>
-              </div>
+              {/* Admin button moved to floating side button */}
             </motion.div>
           </div>
         </section>
@@ -1912,6 +2069,29 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {/* ── FLOATING ADMIN BUTTON ── */}
+      <button
+        type="button"
+        data-ocid="admin.open_modal_button"
+        onClick={() => setAdminOpen(true)}
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center gap-1 py-3 px-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(30,15,5,0.85), rgba(45,20,5,0.90))",
+          borderRadius: "10px 0 0 10px",
+          border: "1px solid rgba(232,82,10,0.5)",
+          borderRight: "none",
+          boxShadow: "-3px 0 15px rgba(0,0,0,0.4)",
+        }}
+        title="Admin Panel"
+      >
+        <Shield className="w-4 h-4 text-saffron-400" />
+        <span className="hindi-text text-saffron-400 text-[10px] font-bold [writing-mode:vertical-rl] [text-orientation:mixed] tracking-widest">
+          ADMIN
+        </span>
+        <Lock className="w-3 h-3 text-saffron-600" />
+      </button>
 
       {/* ── FOOTER ── */}
       <footer className="section-deep py-10 px-4">

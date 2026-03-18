@@ -3,9 +3,9 @@ import Array "mo:core/Array";
 import Nat "mo:core/Nat";
 import Map "mo:core/Map";
 import Text "mo:core/Text";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   public type Donation = {
     id : Nat;
