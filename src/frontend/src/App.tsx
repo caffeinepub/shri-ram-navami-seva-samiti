@@ -91,6 +91,7 @@ const NAV_ITEMS = [
   { label: "होम", id: "home", ocid: "nav.link.1" },
   { label: "हमारे बारे में", id: "about", ocid: "nav.link.2" },
   { label: "कार्यक्रम", id: "events", ocid: "nav.link.3" },
+  { label: "🔴 लाइव", id: "live", ocid: "nav.link.live" },
   { label: "दान करें", id: "donation", ocid: "nav.link.4" },
   { label: "🪪 ID Card", id: "idcard", ocid: "nav.link.5" },
 ];
@@ -1299,6 +1300,114 @@ export default function App() {
                   </div>
                   <div className="lotus-divider mt-5 mb-0">🪷 🕉️ 🪷</div>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── YOUTUBE LIVE SECTION ── */}
+        <section
+          id="live"
+          className="section-deep py-20 px-4"
+          data-ocid="live.section"
+        >
+          <div className="max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="text-center mb-8"
+            >
+              {/* Live badge */}
+              <div className="flex justify-center mb-4">
+                <span
+                  className="hindi-text text-sm font-bold px-5 py-2 rounded-full flex items-center gap-2"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(220,38,38,0.85), rgba(185,28,28,0.9))",
+                    color: "#fff",
+                    boxShadow: "0 2px 16px rgba(220,38,38,0.5)",
+                  }}
+                >
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-200" />
+                  </span>
+                  🔴 लाइव प्रसारण
+                </span>
+              </div>
+
+              <h2
+                className="hindi-text text-3xl md:text-4xl font-bold mb-3"
+                style={{
+                  background: "linear-gradient(135deg, #FFD700, #FF9800)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  textShadow: "none",
+                }}
+              >
+                श्री राम कथा - लाइव प्रसारण
+              </h2>
+              <div className="h-0.5 w-32 mx-auto bg-gradient-to-r from-transparent via-saffron-400 to-transparent mb-4" />
+              <p className="hindi-text text-saffron-300 text-sm">
+                जब कथा प्रसारित हो रही हो, तो यहाँ लाइव देख सकते हैं
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              {/* YouTube iframe with golden border */}
+              <div
+                className="relative w-full rounded-2xl overflow-hidden"
+                style={{
+                  paddingBottom: "56.25%",
+                  border: "2px solid rgba(212,160,23,0.6)",
+                  boxShadow:
+                    "0 0 40px rgba(212,160,23,0.3), 0 8px 40px rgba(0,0,0,0.5)",
+                }}
+              >
+                <iframe
+                  src="https://www.youtube.com/embed/live_stream?channel=UCkKWPUDxD8siSXiTNrTOH9w&autoplay=0"
+                  title="श्री राम कथा लाइव"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                  style={{ border: 0 }}
+                />
+              </div>
+
+              {/* Info card below iframe */}
+              <div
+                className="mt-5 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+                style={{
+                  background: "rgba(255,153,0,0.08)",
+                  border: "1px solid rgba(212,160,23,0.3)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <div className="flex flex-col gap-1.5 text-center sm:text-left">
+                  <span className="hindi-text text-saffron-200 text-sm">
+                    📅 19 से 27 मार्च 2026
+                  </span>
+                  <span className="hindi-text text-saffron-200 text-sm">
+                    ⏰ प्रतिदिन सायं 06 बजे से रात्रि 11 बजे तक
+                  </span>
+                </div>
+                <a
+                  href="https://www.youtube.com/@shriramnavamiusari"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ocid="live.button"
+                  className="btn-saffron hindi-text px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap"
+                >
+                  YouTube पर देखें →
+                </a>
               </div>
             </motion.div>
           </div>
