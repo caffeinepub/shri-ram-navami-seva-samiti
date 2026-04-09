@@ -97,6 +97,7 @@ const NAV_ITEMS = [
 ];
 
 interface Donation {
+  id: bigint;
   name: string;
   phone: string;
   amount: string;
@@ -172,8 +173,8 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:#f5f5f5;display:fl
     <div class="header-row">
       <img class="logo" src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.visibility='hidden'" />
       <div class="org-info">
-        <div class="org-name">श्री राम नवामी सेवा समिति</div>
-        <div class="org-sub">उसरी, हसनपुरा — रामनवामी सेवा समिति</div>
+        <div class="org-name">श्री राम नवमी सेवा समिति</div>
+        <div class="org-sub">उसरी, हसनपुरा — रामनवमी सेवा समिति</div>
       </div>
       <img class="logo" src="${window.location.origin}/assets/uploads/234724-3.png" onerror="this.style.visibility='hidden'" />
     </div>
@@ -259,7 +260,7 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:#f5f5f5;display:fl
                 className="font-black text-sm leading-tight"
                 style={{ color: "#7B0000" }}
               >
-                श्री राम नवामी सेवा समिति
+                श्री राम नवमी सेवा समिति
               </p>
               <p className="text-xs font-semibold" style={{ color: "#5c3d00" }}>
                 उसरी, हसनपुरा
@@ -632,10 +633,14 @@ export default function App() {
     }
   };
 
-  const handleDeleteDonation = async (idx: number) => {
-    // We don't have per-record delete for donations in this version; only clear all
-    // So we'll just remove from local state as a UX improvement
-    setDonations((prev) => prev.filter((_, i) => i !== idx));
+  const handleDeleteDonation = async (id: bigint) => {
+    try {
+      if (!actor) return;
+      await actor.deleteDonationById(id);
+      setDonations((prev) => prev.filter((d) => d.id !== id));
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleMemberLookup = async () => {
@@ -3385,7 +3390,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   data-ocid={`admin.donations.delete_button.${idx + 1}`}
-                                  onClick={() => handleDeleteDonation(idx)}
+                                  onClick={() => handleDeleteDonation(d.id)}
                                   className="w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
                                   style={{
                                     color: "oklch(0.55 0.15 25)",

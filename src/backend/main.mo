@@ -30,10 +30,10 @@ actor {
     timestamp : Time.Time;
   };
 
-  var donationsArray : [Donation] = [];
-  var membersArray : [MemberApplication] = [];
-  var nextDonationId = 0;
-  var nextMemberId = 0;
+  stable var donationsArray : [Donation] = [];
+  stable var membersArray : [MemberApplication] = [];
+  stable var nextDonationId = 0;
+  stable var nextMemberId = 0;
 
   // ---- Donations ----
 
